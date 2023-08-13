@@ -21,14 +21,12 @@ struct memory {
     return bank[addr];
   }
 
-  void check_addr(BusSize addr) {
-    if (addr >= N)
-      throw std::invalid_argument("Address of memory is out of range");
+  void check_addr(BusSize addr) const {
+    if (addr >= N) throw std::out_of_range("Address of memory is out of range");
   }
 
   WordSize const &operator[](BusSize addr) const {
-    if (addr >= N)
-      throw std::invalid_argument("Address of memory is out of range");
+    check_addr(addr);
     return bank[addr];
   }
 };

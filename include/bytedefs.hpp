@@ -17,6 +17,11 @@ using u64 = uint64_t;
 using byte = u8;
 using word = u16;
 
+using f64 = double;
+using f32 = float;
+static_assert(sizeof(f64) == 8);
+static_assert(sizeof(f32) == 4);
+
 }  // namespace emulator
 
 #endif
