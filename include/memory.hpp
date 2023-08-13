@@ -1,17 +1,18 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "bytedefs.hpp"
 #include <stdexcept>
+
+#include "bytedefs.hpp"
 
 namespace emulator {
 
-template <typename WordSize, u64 N, typename BusSize = WordSize> struct memory {
+template <typename WordSize, u64 N, typename BusSize = WordSize>
+struct memory {
   WordSize bank[N];
 
   void initialize() {
-    for (int i = 0; i < N; i++)
-      bank[i] = static_cast<WordSize>(0);
+    for (int i = 0; i < N; i++) bank[i] = static_cast<WordSize>(0);
   }
 
   WordSize &operator[](BusSize addr) {
@@ -31,6 +32,6 @@ template <typename WordSize, u64 N, typename BusSize = WordSize> struct memory {
     return bank[addr];
   }
 };
-} // namespace emulator
+}  // namespace emulator
 
 #endif

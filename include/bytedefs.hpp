@@ -17,6 +17,6 @@ using u64 = uint64_t;
 using byte = u8;
 using word = u16;
 
-} // namespace emulator
+}  // namespace emulator
 
 #endif
