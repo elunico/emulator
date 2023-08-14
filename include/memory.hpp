@@ -9,7 +9,7 @@ namespace emulator {
 
 template <typename WordSize, u64 N, typename BusSize = WordSize>
 struct memory {
-  WordSize bank[];
+  WordSize* bank;
 
   explicit memory() { bank = new WordSize[N]; }
 
