@@ -1,7 +1,8 @@
 
 #include "emulator.hpp"
 
-int main() {
+int
+main() {
   /*****************************************************************
    * Run ./emulate 2>/dev/null to see ONLY emulated program output *
    *****************************************************************/

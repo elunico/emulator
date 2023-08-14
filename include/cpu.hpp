@@ -24,8 +24,10 @@ struct cpu {
     /* 0x61 */ static constexpr u8 INC_A = 0x61;
     /* 0x81 */ static constexpr u8 ADD_DSS = 0x81;
     /* 0x84 */ static constexpr u8 MULT_DSS = 0x84;
+    /* 0x94 */ static constexpr u8 MULT_DSI = 0x94;
     /* 0x91 */ static constexpr u8 ADD_DSI = 0x91;
     /* 0x92 */ static constexpr u8 SUB_DSI = 0x92;
+    /* 0x82 */ static constexpr u8 SUB_DSS = 0x82;
     /* 0xA5 */ static constexpr u8 LD_IM_A = 0xA5;
     /* 0xA6 */ static constexpr u8 LD_IM_B = 0xA6;
     /* 0xB1 */ static constexpr u8 TEST_EQ = 0xB1;
@@ -54,7 +56,8 @@ struct cpu {
   bool is_halt = false;
 
   cpu() { reset(); }
-  void reset() {
+  void
+  reset() {
     is_halt = false;
     pc = 0xF000;
     a = b = x = 0;
@@ -81,79 +84,111 @@ struct cpu {
   // ctrl - for flag bits
   u32 ctrl;
 
-  void ctrl_set(u32 bitmask) { ctrl |= bitmask; }
-  [[nodiscard]] u32 ctrl_get(u32 bitmask) const { return ctrl & bitmask; }
-  void ctrl_clear(u32 setbits) { ctrl &= ~(setbits); }
+  void
+  ctrl_set(u32 bitmask) {
+    ctrl |= bitmask;
+  }
+
+  [[nodiscard]] u32
+  ctrl_get(u32 bitmask) const {
+    return ctrl & bitmask;
+  }
+
+  void
+  ctrl_clear(u32 setbits) {
+    ctrl &= ~(setbits);
+  }
 
   memory<u8, 65536, u32> ram;
 
-  void reg_store(u32 reg, u32 start_addr) {
+  void
+  reg_store(u32 reg, u32 start_addr) {
     ram[start_addr + 3] = (reg & 0xff);
     ram[start_addr + 2] = (reg & 0xff00) >> 8;
     ram[start_addr + 1] = (reg & 0xff0000) >> 16;
     ram[start_addr + 0] = (reg & 0xff00000) >> 24;
   }
 
-  [[nodiscard]] u32 fetch(u32 const& r) const {
+  [[nodiscard]] u32
+  fetch(u32 const& r) const {
     u32 instr = (ram[r] << 24) | (ram[r + 1] << 16) | (ram[r + 2] << 8) |
                 (ram[r + 3] << 0);
     return instr;
   }
 
-  [[nodiscard]] std::tuple<u32*, u32*, u32*> register_decode_dss(
-      u32 instruction) const {
+  template <typename RegType>
+  [[nodiscard]] std::tuple<RegType*, RegType*, RegType*>
+  register_decode_dss(u32 instruction) const {
     u32 ssb = instruction & 0xff;
     u32 srb = (instruction & 0xff00) >> 8;
     u32 sdb = (instruction & 0xff0000) >> 16;
-    u32* des = register_decode(sdb);
-    u32* sr = register_decode(srb);
-    u32* sc = register_decode(ssb);
+    RegType* des = register_decode<RegType>(sdb);
+    RegType* sr = register_decode<RegType>(srb);
+    RegType* sc = register_decode<RegType>(ssb);
     return std::make_tuple(des, sr, sc);
   }
 
-  [[nodiscard]] std::pair<u32*, u32*> register_decode_dsi(
-      u32 instruction) const {
+  template <typename RegType>
+  [[nodiscard]] std::pair<RegType*, RegType*>
+  register_decode_dsi(u32 instruction) const {
     u32 sdb = (instruction & 0xff0000) >> 16;
     u32 srb = (instruction & 0xff00) >> 8;
 
-    u32* des = register_decode(sdb);
-    u32* sr = register_decode(srb);
+    RegType* des = register_decode<RegType>(sdb);
+    RegType* sr = register_decode<RegType>(srb);
     return std::make_pair(des, sr);
   }
 
-  [[nodiscard]] std::pair<u32*, u32*> register_decode_both(
-      u32 instruction) const {
+  template <typename RegType>
+  [[nodiscard]] std::pair<RegType*, RegType*>
+  register_decode_both(u32 instruction) const {
     u32 reg1 = instruction & 0xff;
     u32 reg2 = (instruction & 0xff00) >> 8;
     *metaout << "reg1 " << reg1 << "reg2 " << reg2 << " and " << std::hex
              << instruction << std::endl;
-    u32* lhs = register_decode(reg1);
-    u32* rhs = register_decode(reg2);
+    RegType* lhs = register_decode<RegType>(reg1);
+    RegType* rhs = register_decode<RegType>(reg2);
     return std::make_pair(lhs, rhs);
   }
 
-  [[nodiscard]] u32* register_decode_first(u32 instruction) const {
+  template <typename RegType>
+  [[nodiscard]] RegType*
+  register_decode_first(u32 instruction) const {
     u32 reg1 = instruction & 0xff;
-    return register_decode(reg1);
+    return register_decode<RegType>(reg1);
   }
 
   std::vector<u32*> const regs = {{(u32*)&z, &a, &b, &x, &sp, &ra}};
-  std::vector<f64*> const fregs = {{nullptr, &fa, &fb, &fx}};
+  std::vector<f64*> const fregs = {{(f64*)&z, &fa, &fb, &fx}};
 
-  [[nodiscard]] u32* register_decode(u32 reg_index) const {
-    *metaout << "index " << reg_index << std::endl;
-    if (reg_index > regs.size()) invalid_registers();
-    return regs[reg_index];
+  template <typename RegType>
+  [[nodiscard]] RegType*
+  register_decode(u32 reg_index) const {
+    if constexpr (std::is_floating_point_v<RegType>) {
+      if (reg_index > fregs.size()) invalid_registers();
+      return fregs[reg_index];
+    } else {
+      if (reg_index > regs.size()) invalid_registers();
+      return regs[reg_index];
+    }
   }
 
+  // [[nodiscard]] u32* register_decode(u32 reg_index) const {
+  //   *metaout << "index " << reg_index << std::endl;
+  //   if (reg_index > regs.size()) invalid_registers();
+  //   return regs[reg_index];
+  // }
+
   template <u32 N, typename Return = u32>
-  [[nodiscard]] Return literal_decode(u32 instruction) const noexcept {
+  [[nodiscard]] Return
+  literal_decode(u32 instruction) const noexcept {
     Return mask = (1 << N) - 1;
     Return value = instruction & mask;
     return value;
   }
 
-  void ctrl_check(u32* regval) {
+  void
+  ctrl_check(u32* regval) {
     if (*regval > 8388607u) {
       *regval = -(16777216u - *regval);
       ctrl_set(ctrl_bits::CTRL_NEG_BIT);
@@ -166,12 +201,14 @@ struct cpu {
     }
   }
 
-  [[noreturn]] static void invalid_registers() {
+  [[noreturn]] static void
+  invalid_registers() {
     throw no_such_register(
         "The CPU attempted to execute a malformed instruction");
   };
 
-  void extended_tick() {
+  void
+  extended_tick() {
     *metaout << "extended_tick" << std::endl;
     if (is_halt) return;
 
@@ -181,7 +218,7 @@ struct cpu {
 
     switch (opcode) {
       case extended_opcodes::SQRT_R_I: {
-        auto* s = register_decode_first(instruction);
+        auto* s = register_decode_first<u32>(instruction);
         *s = static_cast<u32>(std::sqrt(*s));
         ctrl_check(s);
       } break;
@@ -194,11 +231,13 @@ struct cpu {
   }
 
  public:
-  void run() {
+  void
+  run() {
     while (!is_halt) tick();
   }
 
-  void tick() {
+  void
+  tick() {
     *metaout << "tick" << std::endl;
     if (z != 0) {
       std::cerr << "!*!*!*!*!*!*! The zero register is " << z
@@ -218,7 +257,7 @@ struct cpu {
     switch (opcode) {
       case opcodes::LOAD_AT_ADDR: {
         *metaout << "Loading from address... " << std::endl;
-        auto [rd, rs] = register_decode_dsi(instruction);
+        auto [rd, rs] = register_decode_dsi<u32>(instruction);
         *rd = ram[*rs];
         *metaout << " Loaded value at " << *rs << " is " << *rd << std::endl;
         ctrl_check(rd);
@@ -241,7 +280,7 @@ struct cpu {
         *metaout << "Incrementing A; now " << a << std::endl;
       } break;
       case opcodes::BNCH_WITH_OFFSET: {
-        *metaout << "Conditional branch... " << std::endl;
+        *metaout << "Conditional branch... ";
 
         if (!ctrl_get(ctrl_bits::CTRL_TEST_TRUE)) {
           *metaout << "... not taken " << std::endl;
@@ -274,7 +313,7 @@ struct cpu {
         };
 
         *metaout << "testing " << std::endl;
-        auto [lhs, rhs] = register_decode_both(instruction);
+        auto [lhs, rhs] = register_decode_both<u32>(instruction);
         *metaout << "Value lhs = " << *lhs << " and rhs = " << *rhs
                  << std::endl;
         if (predicate(*lhs, *rhs)) {
@@ -288,7 +327,7 @@ struct cpu {
         *cpuout << a;
       } break;
       case opcodes::PUTC_R: {
-        auto* reg = register_decode_first(instruction);
+        auto* reg = register_decode_first<u32>(instruction);
         *cpuout << static_cast<char>(*reg);
       } break;
       case opcodes::CALL_FN_I: {
@@ -303,16 +342,19 @@ struct cpu {
         pc = ra;
       } break;
       case opcodes::ADD_DSI:
-      case opcodes::SUB_DSI: {
+      case opcodes::SUB_DSI:
+      case opcodes::MULT_DSI: {
         auto operation = [&opcode](auto a, auto b) {
           if (opcode == opcodes::ADD_DSI)
             return a + b;
           else if (opcode == opcodes::SUB_DSI)
             return a - b;
+          else if (opcode == opcodes::MULT_DSI)
+            return a * b;
           else
             throw no_such_opcode("missing opcode in lambda for DSI");
         };
-        auto [dest, l] = register_decode_dsi(instruction);
+        auto [dest, l] = register_decode_dsi<u32>(instruction);
         auto short_literal = literal_decode<8>(instruction);
         *metaout << "Setting " << *dest << " to " << *l << " op "
                  << short_literal << std::endl;
@@ -320,16 +362,19 @@ struct cpu {
         ctrl_check(dest);
       } break;
       case opcodes::MULT_DSS:
+      case opcodes::SUB_DSS:
       case opcodes::ADD_DSS: {
         auto operation = [&opcode](auto a, auto b) {
           if (opcode == opcodes::ADD_DSS)
             return a + b;
           else if (opcode == opcodes::MULT_DSS)
             return a * b;
+          else if (opcode == opcodes::SUB_DSS)
+            return a - b;
           else
             throw no_such_opcode("missing opcode in lambda for DSS");
         };
-        auto [dest, l, r] = register_decode_dss(instruction);
+        auto [dest, l, r] = register_decode_dss<u32>(instruction);
         *metaout << "operating " << *l << " op " << *r << std::endl;
         // *dest = *l * *r;
         *dest = operation(*l, *r);
@@ -337,11 +382,11 @@ struct cpu {
       } break;
       case opcodes::REG_PUSH: {
         *metaout << "pushing to addr " << sp << std::endl;
-        reg_store(*register_decode_first(instruction), sp);
+        reg_store(*register_decode_first<u32>(instruction), sp);
         sp += 4;
       } break;
       case opcodes::REG_POP: {
-        auto reg = register_decode_first(instruction);
+        auto reg = register_decode_first<u32>(instruction);
         *reg = fetch(sp - 4);
         *metaout << "popping got value " << *reg << " from addr " << (sp - 4)
                  << std::endl;
@@ -359,7 +404,8 @@ struct cpu {
     }
   }
 
-  void set_memory(byte const* bytes, u64 count, u64 addr_start) {
+  void
+  set_memory(byte const* bytes, u64 count, u64 addr_start) {
     ram.check_addr(addr_start + count);
     for (int i = 0; i < count; i++) {
       ram[addr_start + i] = bytes[i];

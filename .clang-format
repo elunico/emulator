@@ -4,3 +4,5 @@ IndentWidth: 2
 DerivePointerAlignment: false
 PointerAlignment: Left
 UseTab: Never
+AlwaysBreakAfterDefinitionReturnType: All
+AlwaysBreakAfterReturnType: All
