@@ -1,8 +1,12 @@
+#ifndef PRINTER_HPP
+#define PRINTER_HPP
 #include <iostream>
 
 namespace emulator {
 
 struct printer {
+  static const printer nullprinter;
+
   std::ostream* stream;
 
   printer(std::ostream* other) : stream(other) {}
@@ -16,6 +20,11 @@ operator<<(printer& printer, T val) {
   return printer;
 }
 
-constexpr const char endl = '\n';
+extern const char endl;
+
+extern printer metaout;
+extern printer cpuout;
 
 }  // namespace emulator
+
+#endif

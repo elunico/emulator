@@ -2,10 +2,15 @@
 #include "emulator.hpp"
 
 int
-main() {
+main(int argc, char const** argv) {
   /*****************************************************************
    * Run ./emulate 2>/dev/null to see ONLY emulated program output *
    *****************************************************************/
+
+  if (argc >= 2 && std::string(argv[1]) == "-s") {
+    emulator::metaout = emulator::printer::nullprinter;
+  }
+
   emulator::cpu processor;
 
   std::vector<emulator::byte> square = {
@@ -85,9 +90,7 @@ main() {
       // function must restore ra after a function call before RET
       emulator::cpu::opcodes::ADD_DSS,  // int y = a + b
       0x03, 0x01, 0x02,
-      emulator::cpu::opcodes::EXT_INSTR,  // take extended instruction
-      0x00, 0x00, 0x00,
-      emulator::cpu::extended_opcodes::SQRT_R_I,  // (int)sqrt(y)
+      emulator::cpu::opcodes::SQRT_R_I,  // (int)sqrt(y)
       0x00, 0x00, 0x03,
       emulator::cpu::opcodes::REG_PUSH,  // push y as result
       0x00, 0x00, 0x03,
@@ -160,6 +163,51 @@ main() {
            emulator::cpu::opcodes::HALT,  // halt
            0x00, 0x00, 0x00}};
 
+  processor.set_memory(data.data(), data.size(), 0xF000);
+  processor.run();
+
+  data = {{
+      emulator::cpu::opcodes::EXT_INSTR,  // take extended instruction
+      0x00,
+      0x00,
+      0x00,
+      emulator::cpu::extended_opcodes::LOAD_FIM_FA,
+      0x40,
+      0x4a,
+      0x11,
+      emulator::cpu::opcodes::EXT_INSTR,  // take extended
+                                          // instruction
+      0x00,
+      0x00,
+      0x00,
+      emulator::cpu::extended_opcodes::LOAD_FIM_FB,
+      0x41,
+      0x33,
+      0x11,
+      emulator::cpu::opcodes::EXT_INSTR,  // take extended instruction
+      0x00,
+      0x00,
+      0x00,
+      emulator::cpu::extended_opcodes::FADD_DSS,
+      0x03,
+      0x01,
+      0x02,
+  }};
+  processor.reset();
+  processor.set_memory(data.data(), data.size(), 0xF000);
+  processor.run();
+  processor.dump_registers();
+
+  data = {{
+      emulator::cpu::opcodes::LD_IM_A,   0x11, 0x11, 0x00,
+      emulator::cpu::opcodes::POPCNT,    0x01, 0x01, 0x00,
+      emulator::cpu::opcodes::PRINT_I_R, 0x00, 0x00, 0x01,
+      emulator::cpu::opcodes::LD_IM_A,   0x00, 0x00, 0x0a,
+      emulator::cpu::opcodes::PUTC_R,    0x00, 0x00, 0x01,
+      emulator::cpu::opcodes::HALT,      0x00, 0x00, 0x00,
+  }};
+
+  processor.reset();
   processor.set_memory(data.data(), data.size(), 0xF000);
   processor.run();
 }

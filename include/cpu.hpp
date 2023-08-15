@@ -1,5 +1,12 @@
+#ifndef CPU_H
+#define CPU_H
+#include <chrono>
 #include <cinttypes>
 #include <cmath>
+#include <csignal>
+#include <cstdlib>
+#include <functional>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -13,9 +20,6 @@
 
 namespace emulator {
 
-static printer metaout = printer{};  // &std::cerr;
-static printer cpuout = &std::cout;
-
 struct cpu {
   struct opcodes {
     /* 0x01 */ static constexpr u8 MOVE = 0x01;
@@ -23,11 +27,11 @@ struct cpu {
     /* 0x03 */ static constexpr u8 OR_R = 0x03;
     /* 0x04 */ static constexpr u8 NOT_R = 0x04;
     /* 0x05 */ static constexpr u8 XOR_R = 0x05;
+    /* 0x10 */ static constexpr u8 HALT = 0x10;
     /* 0x12 */ static constexpr u8 AND_I = 0x12;
     /* 0x13 */ static constexpr u8 OR_I = 0x13;
     /* 0x14 */ static constexpr u8 NOT_I = 0x14;
     /* 0x15 */ static constexpr u8 XOR_I = 0x15;
-    /* 0x10 */ static constexpr u8 HALT = 0x10;
     /* 0x21 */ static constexpr u8 LOAD_AT_ADDR = 0x21;
     /* 0x30 */ static constexpr u8 RET = 0x30;
     /* 0x40 */ static constexpr u8 CALL_FN_I = 0x40;
@@ -35,11 +39,12 @@ struct cpu {
     /* 0x62 */ static constexpr u8 INC_B = 0x62;
     /* 0x63 */ static constexpr u8 INC_X = 0x63;
     /* 0x81 */ static constexpr u8 ADD_DSS = 0x81;
+    /* 0x82 */ static constexpr u8 SUB_DSS = 0x82;
     /* 0x84 */ static constexpr u8 MULT_DSS = 0x84;
-    /* 0x94 */ static constexpr u8 MULT_DSI = 0x94;
     /* 0x91 */ static constexpr u8 ADD_DSI = 0x91;
     /* 0x92 */ static constexpr u8 SUB_DSI = 0x92;
-    /* 0x82 */ static constexpr u8 SUB_DSS = 0x82;
+    /* 0x94 */ static constexpr u8 MULT_DSI = 0x94;
+    /* 0x9A */ static constexpr u8 SQRT_R_I = 0x9A;
     /* 0xA5 */ static constexpr u8 LD_IM_A = 0xA5;
     /* 0xA6 */ static constexpr u8 LD_IM_B = 0xA6;
     /* 0xA7 */ static constexpr u8 LD_IM_X = 0xA7;
@@ -49,14 +54,24 @@ struct cpu {
     /* 0xCC */ static constexpr u8 PUTC_R = 0xCC;
     /* 0xD1 */ static constexpr u8 REG_PUSH = 0xD1;
     /* 0xD2 */ static constexpr u8 REG_POP = 0xD2;
+    /* 0xD9 */ static constexpr u8 POPCNT = 0xD9;
     /* 0xE1 */ static constexpr u8 JMP_WITH_OFFSET = 0xE1;
     /* 0xEA */ static constexpr u8 BNCH_WITH_OFFSET = 0xEA;
+    /* 0xEB */ static constexpr u8 RND_SEED = 0xEB;
+    /* 0xEC */ static constexpr u8 RND_NUM = 0xEC;
     /* 0xF0 */ static constexpr u8 EXT_INSTR = 0xF0;
   };
 
   struct extended_opcodes {
     /* 0x10 */ static constexpr u8 LOAD_FIM_FA = 0x10;
-    /* 0x81 */ static constexpr u8 SQRT_R_I = 0x81;
+    /* 0x10 */ static constexpr u8 LOAD_FIM_FB = 0x11;
+    /* 0x81 */ static constexpr u8 FADD_DSS = 0x81;
+    /* 0x82 */ static constexpr u8 FSUB_DSS = 0x82;
+    /* 0x84 */ static constexpr u8 FMULT_DSS = 0x84;
+    /* 0x91 */ static constexpr u8 FADD_DSI = 0x91;
+    /* 0x92 */ static constexpr u8 FSUB_DSI = 0x92;
+    /* 0x94 */ static constexpr u8 FMULT_DSI = 0x94;
+    /* 0xA2 */ static constexpr u8 FSQRT_R_I = 0xA2;
   };
 
   struct ctrl_bits {
@@ -67,21 +82,33 @@ struct cpu {
     static constexpr u32 CTRL_EXT_FNC = 0x80000000;
   };
 
-  bool is_halt = false;
-
   cpu() { reset(); }
 
   void
   reset() {
-    is_halt = false;
+    halted = false;
     pc = 0xF000;
     a = b = x = 0;
+    fa = fb = fx = 0.0;
     sp = 0x0100;
     ra = 0;
     ctrl = 0;
+    m_cycles = 0;
+  }
+
+  int
+  cycles() const noexcept {
+    return m_cycles;
+  }
+
+  bool
+  is_halted() const noexcept {
+    return halted;
   }
 
  private:
+  bool halted = false;
+
   // Registers
 
   // GP registers
@@ -105,6 +132,20 @@ struct cpu {
   // convenience access for decoding instructions
   std::vector<u32*> const regs = {{(u32*)&z, &a, &b, &x, &sp, &ra}};
   std::vector<f64*> const fregs = {{(f64*)&z, &fa, &fb, &fx}};
+
+  int m_cycles = 0;
+
+  void
+  zero_check() const noexcept {
+    if (z != 0) {
+      std::cerr << "!*!*!*!*!*!*! The zero register is " << z
+                << " !*!*!*!*!*!*!" << endl;
+      std::cout
+          << "!*!*!*!*!*!*! The zero register has been modified !*!*!*!*!*!*!"
+          << endl;
+      std::terminate();
+    }
+  }
 
   void
   ctrl_set(u32 bitmask) {
@@ -190,12 +231,13 @@ struct cpu {
     }
   }
 
-  template <u32 N, typename Return = u32>
+  template <u64 N, typename Return = u32>
   [[nodiscard]] Return
   literal_decode(u32 instruction) const noexcept {
-    u32 mask = (1 << N) - 1;
-    u32 temporary = (instruction & mask);
+    u64 mask = (N == (sizeof(u64) * 8)) ? ~((u64)0) : (1llu << N) - 1llu;
+    u64 temporary = (instruction & mask);
     Return value = *(Return*)&temporary;
+    metaout << mask << " " << temporary << " " << value << endl;
     return value;
   }
 
@@ -219,57 +261,16 @@ struct cpu {
         "The CPU attempted to execute a malformed instruction");
   };
 
-  void
-  extended_tick() {
-    metaout << "extended_tick" << endl;
-    if (is_halt) return;
-
+  std::pair<u8, u32>
+  get_next_instruction() {
     u32 instruction = fetch(pc);
     pc += 4;
     byte opcode = instruction >> 24;
-
-    switch (opcode) {
-      case extended_opcodes::SQRT_R_I: {
-        auto* s = register_decode_first<u32>(instruction);
-        *s = static_cast<u32>(std::sqrt(*s));
-        set_needed_ctrl(s);
-      } break;
-      case extended_opcodes::LOAD_FIM_FA: {
-        f64 lit = literal_decode<24, f64>(instruction);
-        fa = lit;
-      } break;
-      default: {
-        throw no_such_opcode("The extended opcode does not exist");
-      }
-    }
-
-    ctrl_clear(ctrl_bits::CTRL_EXT_FNC);
-  }
-
- public:
-  void
-  run() {
-    while (!is_halt) tick();
+    return std::make_pair(opcode, instruction);
   }
 
   void
-  tick() {
-    metaout << "tick" << endl;
-    if (z != 0) {
-      std::cerr << "!*!*!*!*!*!*! The zero register is " << z
-                << " !*!*!*!*!*!*!" << endl;
-      std::cout
-          << "!*!*!*!*!*!*! The zero register has been modified !*!*!*!*!*!*!"
-          << endl;
-      std::terminate();
-    }
-    if (is_halt) return;
-    if (ctrl_get(ctrl_bits::CTRL_EXT_FNC)) return extended_tick();
-
-    u32 instruction = fetch(pc);
-    pc += 4;
-    byte opcode = instruction >> 24;
-
+  execute_instruction(u8 opcode, u32 instruction) {
     switch (opcode) {
       case opcodes::AND_R:
       case opcodes::OR_R:
@@ -359,7 +360,9 @@ struct cpu {
           metaout << "... not taken " << endl;
           break;
         }
-      }
+      } /* break; */
+      // Do not separate the BNCH and JMP instructions
+      // BNCH relies on JMP being the next case
       case opcodes::JMP_WITH_OFFSET: {
         metaout << " JUMP " << endl;
         u32 addr = literal_decode<24>(instruction);
@@ -371,7 +374,7 @@ struct cpu {
         metaout << "pc is now at " << pc << " and is " << ram[pc] << endl;
       } break;
       case opcodes::HALT: {
-        is_halt = true;
+        halted = true;
         metaout << "Halting." << endl;
       } break;
       case opcodes::TEST_EQ:
@@ -393,7 +396,18 @@ struct cpu {
         } else {
           ctrl_clear(ctrl_bits::CTRL_TEST_TRUE);
         }
-
+      } break;
+      case opcodes::POPCNT: {
+        metaout << "CPU does have popcnt!" << endl;
+        auto [result, src] = register_decode_dsi<u32>(instruction);
+        // *result = __builtin_popcount(*src);
+        asm("movl %1, %%eax;"
+            "popcntl %%eax, %%eax;"
+            "movl %%eax, %0;"
+            : "=r"(*result) /* output */
+            : "r"(*src)     /* input */
+            : "%eax"        /* clobbered register */
+        );
       } break;
       case opcodes::PRINT_I_R: {
         auto reg = register_decode_first<u32>(instruction);
@@ -465,6 +479,20 @@ struct cpu {
                 << endl;
         sp -= 4;
       } break;
+      case opcodes::RND_SEED: {
+        auto p = register_decode_first<u32>(instruction);
+        srand(*p);
+      } break;
+      case opcodes::RND_NUM: {
+        auto* p = register_decode_first<u32>(instruction);
+        *p = rand();
+        set_needed_ctrl(p);
+      } break;
+      case opcodes::SQRT_R_I: {
+        auto* s = register_decode_first<u32>(instruction);
+        *s = static_cast<u32>(std::sqrt(*s));
+        set_needed_ctrl(s);
+      } break;
       case opcodes::EXT_INSTR: {
         ctrl_set(ctrl_bits::CTRL_EXT_FNC);
       } break;
@@ -478,6 +506,123 @@ struct cpu {
   }
 
   void
+  execute_extended_instruction(u8 opcode, u32 instruction) {
+    metaout << "extended_tick" << endl;
+    ctrl_clear(ctrl_bits::CTRL_EXT_FNC);
+
+    switch (opcode) {
+      case extended_opcodes::FADD_DSI:
+      case extended_opcodes::FSUB_DSI:
+      case extended_opcodes::FMULT_DSI: {
+        auto operation = [&opcode](auto a, auto b) {
+          if (opcode == extended_opcodes::FADD_DSI)
+            return a + b;
+          else if (opcode == extended_opcodes::FSUB_DSI)
+            return a - b;
+          else if (opcode == extended_opcodes::FMULT_DSI)
+            return a * b;
+          else
+            throw no_such_opcode("missing opcode in lambda for DSI");
+        };
+        auto [dest, l] = register_decode_dsi<f64>(instruction);
+        auto short_literal = literal_decode<8, f64>(instruction);
+        metaout << "Setting " << *dest << " to " << *l << " op "
+                << short_literal << endl;
+        *dest = operation(*l, short_literal);
+        // set_needed_ctrl(dest);
+      } break;
+      case extended_opcodes::FMULT_DSS:
+      case extended_opcodes::FSUB_DSS:
+      case extended_opcodes::FADD_DSS: {
+        auto operation = [&opcode](auto a, auto b) {
+          if (opcode == extended_opcodes::FMULT_DSS)
+            return a * b;
+          else if (opcode == extended_opcodes::FSUB_DSS)
+            return a - b;
+          else if (opcode == extended_opcodes::FADD_DSS)
+            return a + b;
+          else
+            throw no_such_opcode("missing opcode in lambda for DSS");
+        };
+        auto [dest, l, r] = register_decode_dss<f64>(instruction);
+        metaout << "operating " << *l << " op " << *r << endl;
+        // *dest = *l * *r;
+        *dest = operation(*l, *r);
+        // set_needed_ctrl(dest);
+      } break;
+      case extended_opcodes::FSQRT_R_I: {
+        auto* s = register_decode_first<f64>(instruction);
+        *s = static_cast<f64>(std::sqrt(*s));
+        // set_needed_ctrl(s);
+      } break;
+      case extended_opcodes::LOAD_FIM_FA: {
+        u32 bits = ((literal_decode<32, u32>(instruction) & ~0xff000000) << 8);
+        f32 value = *(f32*)&bits;
+        fa = value;
+        metaout << "loading fa=" << fa << " from " << instruction;
+      } break;
+      case extended_opcodes::LOAD_FIM_FB: {
+        u32 bits = ((literal_decode<32, u32>(instruction) & ~0xff000000) << 8);
+        f32 value = *(f32*)&bits;
+        fb = value;
+        metaout << "loading fb=" << fb << " from " << instruction;
+      } break;
+      default: {
+        throw no_such_opcode("The extended opcode does not exist");
+      }
+    }
+  }
+
+ public:
+  void
+  dump_registers(printer out = metaout) const {
+    out << std::hex << std::showbase;
+    out << "====== Processor Registers ======\n";
+    out << "| GP Registers\n";
+    out << "|   a = " << a << "  b = " << b << "  x = " << x << "\n";
+    out << "| FP Registers\n";
+    out << std::dec << std::setprecision(5);
+    out << "|   fa = " << fa << "  fb = " << fb << "  fx = " << fx << "\n";
+    out << "| Special Registers\n";
+    out << std::hex << std::showbase;
+    out << "|   sp = " << sp << "  ra = " << ra << "  pc = " << pc << "\n";
+    out << "| Zero\n";
+    out << "|   z = " << z << "\n";
+    out << "| CTRL Register\n";
+    out << "|   ctrl = " << ctrl << "\n";
+    out << "=================================\n";
+    out << std::dec;
+  }
+
+  void
+  run() {
+    using us = std::chrono::microseconds;
+    auto start = std::chrono::system_clock::now();
+    while (!halted) tick();
+    auto end = std::chrono::system_clock::now();
+    auto mseconds = std::chrono::duration_cast<us>(end - start).count();
+
+    metaout << std::dec << "CPU Ran for " << cycles() << " cycles in "
+            << mseconds << " us." << endl;
+  }
+
+  void
+  tick() {
+    m_cycles++;
+    metaout << "tick" << endl;
+    zero_check();
+
+    if (halted) return;
+
+    auto [opcode, instruction] = get_next_instruction();
+    if (ctrl_get(ctrl_bits::CTRL_EXT_FNC)) {
+      execute_extended_instruction(opcode, instruction);
+    } else {
+      execute_instruction(opcode, instruction);
+    }
+  }
+
+  void
   set_memory(byte const* bytes, u64 count, u64 addr_start) {
     ram.check_addr(addr_start + count);
     for (int i = 0; i < count; i++) {
@@ -486,3 +631,5 @@ struct cpu {
   }
 };
 }  // namespace emulator
+
+#endif

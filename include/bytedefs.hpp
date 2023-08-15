@@ -19,8 +19,11 @@ using word = u16;
 
 using f64 = double;
 using f32 = float;
+using f128 = long double;
+
 static_assert(sizeof(f64) == 8);
 static_assert(sizeof(f32) == 4);
+static_assert(sizeof(f128) == 16);
 
 }  // namespace emulator
 

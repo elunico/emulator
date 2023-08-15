@@ -27,10 +27,15 @@ struct memory {
     return bank[addr];
   }
 
+#ifdef NO_BOUNDS_CHECK_MEM
+  inline void
+  check_addr(BusSize addr) const noexcept {}
+#else
   void
   check_addr(BusSize addr) const {
     if (addr >= N) throw std::out_of_range("Address of memory is out of range");
   }
+#endif
 
   WordSize const&
   operator[](BusSize addr) const {
