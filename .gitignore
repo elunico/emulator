@@ -6,3 +6,5 @@ CMakeCache.txt
 emulate
 Makefile
 .cache
+.idea/
+.cmake

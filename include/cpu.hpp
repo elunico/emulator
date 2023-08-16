@@ -287,7 +287,7 @@ struct cpu {
         };
         auto [rd, rs, rr] = register_decode_dss<u32>(instruction);
         *rd = operation(*rs, *rr);
-
+        set_needed_ctrl(rd);
       } break;
       case opcodes::AND_I:
       case opcodes::OR_I:
@@ -305,7 +305,7 @@ struct cpu {
         auto [rd, rs] = register_decode_dsi<u32>(instruction);
         auto im = literal_decode<8>(instruction);
         *rd = operation(*rs, im);
-
+        set_needed_ctrl(rd);
       } break;
       case opcodes::MOVE: {
         auto [rd, rs] = register_decode_dsi<u32>(instruction);
@@ -315,6 +315,7 @@ struct cpu {
       case opcodes::NOT_R: {
         auto [rd, rs] = register_decode_dsi<u32>(instruction);
         *rd = ~*rs;
+        set_needed_ctrl(rd);
       } break;
       case opcodes::LOAD_AT_ADDR: {
         metaout << "Loading from address... " << endl;
