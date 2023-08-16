@@ -1,15 +1,16 @@
-
 #include "emulator.hpp"
 
-int
-main(int argc, char const** argv) {
+void
+hard_coded(int argc, char const** argv) {
   /*****************************************************************
    * Run ./emulate 2>/dev/null to see ONLY emulated program output *
    *****************************************************************/
 
-  if (argc >= 2 && std::string(argv[1]) == "-s") {
+  if (argc >= 2 && std::string(argv[1]) == "-s")
     emulator::metaout = emulator::printer::nullprinter;
-  }
+
+  emulator::cpuout = emulator::printer::nullprinter;
+  emulator::metaout = emulator::printer::nullprinter;
 
   emulator::cpu processor;
 
@@ -50,52 +51,52 @@ main(int argc, char const** argv) {
 
   std::string msg = "distance = ";
 
-  std::vector<emulator::byte> dist = {{
-      emulator::cpu::opcodes::REG_POP,  // pop arg1 into a
-      0x00, 0x00, 0x01,
-      emulator::cpu::opcodes::REG_POP,  // pop arg2 into b
-      0x00, 0x00, 0x02,
+  std::vector<emulator::byte> dist = {
+      {emulator::cpu::opcodes::REG_POP,  // pop arg1 into a
+       0x00, 0x00, 0x01,
+       emulator::cpu::opcodes::REG_POP,  // pop arg2 into b
+       0x00, 0x00, 0x02,
 
-      emulator::cpu::opcodes::REG_PUSH,  // save the ra
-      // before calling a function you must save the return address
-      // then push the arguments to the function then call the function
-      0x00, 0x00, 0x05,
-      emulator::cpu::opcodes::REG_PUSH,  // push a
-      0x00, 0x00, 0x01,
-      emulator::cpu::opcodes::REG_PUSH,  // push b
-      0x00, 0x00, 0x02,
-      // b is the top of the stack adn since square is a unary function
-      // only b will be squared
-      emulator::cpu::opcodes::CALL_FN_I,  // call square at 0x2000 for b
-      0x00, 0x20, 0x00,
-      emulator::cpu::opcodes::REG_POP,  // pop squared result into b
-      0x00, 0x00, 0x02,
-      emulator::cpu::opcodes::REG_POP,  // pop original arg1 result into a
-      0x00, 0x00, 0x01,
-      emulator::cpu::opcodes::REG_PUSH,  // push b*b to save it
-      0x00, 0x00, 0x02,
-      // the result of squaring b needs to be preserved before the next function
-      // call so it is pushed to the stack but in reverse order so a can be
-      // the top of the stack for the next call to square
-      emulator::cpu::opcodes::REG_PUSH,  // push a to be squared
-      0x00, 0x00, 0x01,
-      emulator::cpu::opcodes::CALL_FN_I,  // call squrae at 0x2000 for a
-      0x00, 0x20, 0x00,
-      emulator::cpu::opcodes::REG_POP,  // pop fn result a*a into a
-      0x00, 0x00, 0x01,
-      emulator::cpu::opcodes::REG_POP,  // pop b*b into b
-      0x00, 0x00, 0x02,
-      emulator::cpu::opcodes::REG_POP,  // pop ra back into ra
-      0x00, 0x00, 0x05,
-      // function must restore ra after a function call before RET
-      emulator::cpu::opcodes::ADD_DSS,  // int y = a + b
-      0x03, 0x01, 0x02,
-      emulator::cpu::opcodes::SQRT_R_I,  // (int)sqrt(y)
-      0x00, 0x00, 0x03,
-      emulator::cpu::opcodes::REG_PUSH,  // push y as result
-      0x00, 0x00, 0x03,
-      emulator::cpu::opcodes::RET  // return;
-  }};
+       emulator::cpu::opcodes::REG_PUSH,  // save the ra
+       // before calling a function you must save the return address
+       // then push the arguments to the function then call the function
+       0x00, 0x00, 0x05,
+       emulator::cpu::opcodes::REG_PUSH,  // push a
+       0x00, 0x00, 0x01,
+       emulator::cpu::opcodes::REG_PUSH,  // push b
+       0x00, 0x00, 0x02,
+       // b is the top of the stack adn since square is a unary function
+       // only b will be squared
+       emulator::cpu::opcodes::CALL_FN_I,  // call square at 0x2000 for b
+       0x00, 0x20, 0x00,
+       emulator::cpu::opcodes::REG_POP,  // pop squared result into b
+       0x00, 0x00, 0x02,
+       emulator::cpu::opcodes::REG_POP,  // pop original arg1 result into a
+       0x00, 0x00, 0x01,
+       emulator::cpu::opcodes::REG_PUSH,  // push b*b to save it
+       0x00, 0x00, 0x02,
+       // the result of squaring b needs to be preserved before the next
+       // function call so it is pushed to the stack but in reverse order so a
+       // can be the top of the stack for the next call to square
+       emulator::cpu::opcodes::REG_PUSH,  // push a to be squared
+       0x00, 0x00, 0x01,
+       emulator::cpu::opcodes::CALL_FN_I,  // call squrae at 0x2000 for a
+       0x00, 0x20, 0x00,
+       emulator::cpu::opcodes::REG_POP,  // pop fn result a*a into a
+       0x00, 0x00, 0x01,
+       emulator::cpu::opcodes::REG_POP,  // pop b*b into b
+       0x00, 0x00, 0x02,
+       emulator::cpu::opcodes::REG_POP,  // pop ra back into ra
+       0x00, 0x00, 0x05,
+       // function must restore ra after a function call before RET
+       emulator::cpu::opcodes::ADD_DSS,  // int y = a + b
+       0x03, 0x01, 0x02,
+       emulator::cpu::opcodes::SQRT_R_I,  // (int)sqrt(y)
+       0x00, 0x00, 0x03,
+       emulator::cpu::opcodes::REG_PUSH,  // push y as result
+       0x00, 0x00, 0x03,
+       emulator::cpu::opcodes::RET,  // return;
+       0x00, 0x00, 0x00}};
 
   std::vector<emulator::byte> data = {
       {emulator::cpu::opcodes::LD_IM_A,  // load a=3
@@ -166,33 +167,9 @@ main(int argc, char const** argv) {
   processor.set_memory(data.data(), data.size(), 0xF000);
   processor.run();
 
-  data = {{
-      emulator::cpu::opcodes::EXT_INSTR,  // take extended instruction
-      0x00,
-      0x00,
-      0x00,
-      emulator::cpu::extended_opcodes::LOAD_FIM_FA,
-      0x40,
-      0x4a,
-      0x11,
-      emulator::cpu::opcodes::EXT_INSTR,  // take extended
-                                          // instruction
-      0x00,
-      0x00,
-      0x00,
-      emulator::cpu::extended_opcodes::LOAD_FIM_FB,
-      0x41,
-      0x33,
-      0x11,
-      emulator::cpu::opcodes::EXT_INSTR,  // take extended instruction
-      0x00,
-      0x00,
-      0x00,
-      emulator::cpu::extended_opcodes::FADD_DSS,
-      0x03,
-      0x01,
-      0x02,
-  }};
+  data = {{EXT_INSTR(LOAD_FIM_FA, 0x40, 0x4a, 0x11),
+           EXT_INSTR(LOAD_FIM_FB, 0x41, 0x33, 0x11),
+           EXT_INSTR(FADD_DSS, 0x03, 0x01, 0x02)}};
   processor.reset();
   processor.set_memory(data.data(), data.size(), 0xF000);
   processor.run();
