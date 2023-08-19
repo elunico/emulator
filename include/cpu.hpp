@@ -11,6 +11,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 #include "bytedefs.hpp"
@@ -27,12 +28,21 @@ struct cpu {
     /* 0x03 */ static constexpr u8 OR_R = 0x03;
     /* 0x04 */ static constexpr u8 NOT_R = 0x04;
     /* 0x05 */ static constexpr u8 XOR_R = 0x05;
+    /* 0x06 */ static constexpr u8 LLSH_R = 0x06;
+    /* 0x07 */ static constexpr u8 ALSH_R = 0x07;
+    /* 0x08 */ static constexpr u8 LRSH_R = 0x08;
+    /* 0x09 */ static constexpr u8 ARSH_R = 0x09;
     /* 0x10 */ static constexpr u8 HALT = 0x10;
     /* 0x12 */ static constexpr u8 AND_I = 0x12;
     /* 0x13 */ static constexpr u8 OR_I = 0x13;
     /* 0x14 */ static constexpr u8 NOT_I = 0x14;
     /* 0x15 */ static constexpr u8 XOR_I = 0x15;
+    /* 0x16 */ static constexpr u8 LLSH_I = 0x16;
+    /* 0x17 */ static constexpr u8 ALSH_I = 0x17;
+    /* 0x18 */ static constexpr u8 LRSH_I = 0x18;
+    /* 0x19 */ static constexpr u8 ARSH_I = 0x19;
     /* 0x21 */ static constexpr u8 LOAD_AT_ADDR = 0x21;
+    /* 0x22 */ static constexpr u8 STORE_AT_ADDR = 0x22;
     /* 0x30 */ static constexpr u8 RET = 0x30;
     /* 0x40 */ static constexpr u8 CALL_FN_I = 0x40;
     /* 0x61 */ static constexpr u8 INC_A = 0x61;
@@ -50,8 +60,10 @@ struct cpu {
     /* 0xA7 */ static constexpr u8 LD_IM_X = 0xA7;
     /* 0xB1 */ static constexpr u8 TEST_EQ = 0xB1;
     /* 0xB2 */ static constexpr u8 TEST_NEQ = 0xB2;
+    /* 0xB3 */ static constexpr u8 TEST_CTRL_NEG = 0xB3;
     /* 0xC1 */ static constexpr u8 PRINT_I_R = 0xC1;
     /* 0xCC */ static constexpr u8 PUTC_R = 0xCC;
+    /* 0xCF */ static constexpr u8 GETC_R = 0xCF;
     /* 0xD1 */ static constexpr u8 REG_PUSH = 0xD1;
     /* 0xD2 */ static constexpr u8 REG_POP = 0xD2;
     /* 0xD9 */ static constexpr u8 POPCNT = 0xD9;
@@ -127,7 +139,7 @@ struct cpu {
   u32 ctrl;
 
   // ram
-  memory<u8, 65536, u32> ram;
+  memory<u8, 16, 4096, u32> ram;
 
   // convenience access for decoding instructions
   std::vector<u32*> const regs = {{(u32*)&z, &a, &b, &x, &sp, &ra}};
@@ -242,11 +254,11 @@ struct cpu {
   }
 
   void
-  set_needed_ctrl(u32* regval) {
-    if (*regval > 8388607u) {
-      *regval = -(16777216u - *regval);
+  set_needed_ctrl(u32* regptr) {
+    if (*regptr > 8388607u) {
+      *regptr = -(16777216u - *regptr);
       ctrl_set(ctrl_bits::CTRL_NEG_BIT);
-    } else if (*regval == 0) {
+    } else if (*regptr == 0) {
       ctrl_clear(ctrl_bits::CTRL_NEG_BIT);
       ctrl_set(ctrl_bits::CTRL_ZERO_BIT);
     } else {
@@ -289,6 +301,30 @@ struct cpu {
         *rd = operation(*rs, *rr);
         set_needed_ctrl(rd);
       } break;
+      case opcodes::LLSH_R:
+      case opcodes::ALSH_R:
+      case opcodes::LRSH_R:
+      case opcodes::ARSH_R: {
+        auto operation = [&opcode](auto a, auto b) {
+          if (opcode == opcodes::LLSH_R)
+            return a << b;
+          else if (opcode == opcodes::ALSH_R) {
+            using signed_a = std::make_signed_t<decltype(a)>;
+            auto result = static_cast<signed_a>(a) << b;
+            return static_cast<decltype(a)>(result);
+          } else if (opcode == opcodes::LRSH_R)
+            return a >> b;
+          else if (opcode == opcodes::ARSH_R) {
+            using signed_a = std::make_signed_t<decltype(a)>;
+            auto result = static_cast<signed_a>(a) >> b;
+            return static_cast<decltype(a)>(result);
+          } else
+            throw no_such_opcode("opcode does not exist in bit manip group");
+        };
+        auto [rd, rs, rr] = register_decode_dss<u32>(instruction);
+        *rd = operation(*rs, *rr);
+        set_needed_ctrl(rd);
+      } break;
       case opcodes::AND_I:
       case opcodes::OR_I:
       case opcodes::XOR_I: {
@@ -307,6 +343,27 @@ struct cpu {
         *rd = operation(*rs, im);
         set_needed_ctrl(rd);
       } break;
+      case opcodes::LLSH_I:
+      case opcodes::ALSH_I:
+      case opcodes::LRSH_I:
+      case opcodes::ARSH_I: {
+        auto operation = [&opcode](auto a, auto b) {
+          if (opcode == opcodes::LLSH_I)
+            return a << b;
+          else if (opcode == opcodes::ALSH_I)
+            return a << b;  // TODO: fix this
+          else if (opcode == opcodes::LRSH_I)
+            return a >> b;
+          else if (opcode == opcodes::ARSH_I)
+            return a >> b;  // TODO: fix
+          else
+            throw no_such_opcode("opcode does not exist in bit manip group");
+        };
+        auto [rd, rs] = register_decode_dsi<u32>(instruction);
+        auto lit = literal_decode<8>(instruction);
+        *rd = operation(*rs, lit);
+        set_needed_ctrl(rd);
+      } break;
       case opcodes::MOVE: {
         auto [rd, rs] = register_decode_dsi<u32>(instruction);
         *rd = *rs;
@@ -323,6 +380,13 @@ struct cpu {
         *rd = ram[*rs];
         metaout << " Loaded value at " << *rs << " is " << *rd << endl;
         set_needed_ctrl(rd);
+      } break;
+      case opcodes::STORE_AT_ADDR: {
+        metaout << "Storing to address... " << endl;
+        auto [rd, rs] = register_decode_dsi<u32>(instruction);
+        ram[*rd] = *rs;
+        metaout << " Stored value of " << *rs << " to " << *rd << endl;
+        // set_needed_ctrl(rd);
       } break;
       case opcodes::LD_IM_A: {
         metaout << "Loading into a " << literal_decode<24>(instruction) << endl;
@@ -393,6 +457,13 @@ struct cpu {
         auto [lhs, rhs] = register_decode_both<u32>(instruction);
         metaout << "Value lhs = " << *lhs << " and rhs = " << *rhs << endl;
         if (predicate(*lhs, *rhs)) {
+          ctrl_set(ctrl_bits::CTRL_TEST_TRUE);
+        } else {
+          ctrl_clear(ctrl_bits::CTRL_TEST_TRUE);
+        }
+      } break;
+      case opcodes::TEST_CTRL_NEG: {
+        if (ctrl_get(ctrl_bits::CTRL_NEG_BIT)) {
           ctrl_set(ctrl_bits::CTRL_TEST_TRUE);
         } else {
           ctrl_clear(ctrl_bits::CTRL_TEST_TRUE);
@@ -488,6 +559,11 @@ struct cpu {
         auto* p = register_decode_first<u32>(instruction);
         *p = rand();
         set_needed_ctrl(p);
+      } break;
+      case opcodes::GETC_R: {
+        auto [destination, _] = register_decode_dsi<u32>(instruction);
+        *destination = getchar();
+        set_needed_ctrl(destination);
       } break;
       case opcodes::SQRT_R_I: {
         auto* s = register_decode_first<u32>(instruction);

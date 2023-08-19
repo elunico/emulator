@@ -1,28 +1,36 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include <__concepts/arithmetic.h>
+
 #include <stdexcept>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "bytedefs.hpp"
 
 namespace emulator {
 
-template <typename WordSize, u64 N, typename BusSize = WordSize>
-struct memory {
+template <std::integral WordSize, u64 ByteCount,
+          std::integral BusSize = WordSize>
+struct page {
   WordSize* bank;
-
-  explicit memory() { bank = new WordSize[N]; }
-
-  ~memory() { delete[] bank; }
-
+  explicit page() { bank = new WordSize[ByteCount]; }
+  ~page() { delete[] bank; }
   [[maybe_unused]] void
   initialize() {
-    for (int i = 0; i < N; i++) bank[i] = static_cast<WordSize>(0);
+    for (int i = 0; i < ByteCount; i++) bank[i] = static_cast<WordSize>(0);
   }
-
   WordSize&
   operator[](BusSize addr) {
     // *metaout << "Getting memory at " << addr << std::endl;
+    check_addr(addr);
+    return bank[addr];
+  }
+
+  WordSize const&
+  at(BusSize addr) const {
     check_addr(addr);
     return bank[addr];
   }
@@ -33,15 +41,61 @@ struct memory {
 #else
   void
   check_addr(BusSize addr) const {
-    if (addr >= N) throw std::out_of_range("Address of memory is out of range");
+    if (addr >= ByteCount)
+      throw std::out_of_range("Address of memory is out of range");
+  }
+#endif
+};
+
+template <std::integral WordSize, u64 PageCount, u64 PageSize = 4096,
+          std::integral BusSize = WordSize>
+struct memory {
+  std::unordered_map<std::size_t, page<WordSize, PageSize, BusSize>> pages;
+
+  static std::pair<std::size_t, std::size_t>
+  get_location(BusSize addr) {
+    auto page = (addr / PageSize);
+    auto offset = addr % PageSize;
+    return std::make_pair(page, offset);
+  }
+
+  WordSize&
+  operator[](BusSize addr) {
+    // *metaout << "Getting memory at " << addr << std::endl;
+    check_addr(addr);
+    auto [page, offset] = get_location(addr);
+    allocated[page] = true;
+    return pages[page][offset];
+  }
+
+#ifdef NO_BOUNDS_CHECK_MEM
+  inline void
+  check_addr(BusSize addr) const noexcept {}
+#else
+  void
+  check_addr(BusSize addr) const {
+    auto [p, o] = get_location(addr);
+
+    if (p > PageCount || o > PageSize)
+      throw std::out_of_range("Address of memory is out of range");
   }
 #endif
 
   WordSize const&
   operator[](BusSize addr) const {
     check_addr(addr);
-    return bank[addr];
+    auto [page, offset] = get_location(addr);
+#ifdef UNSAFE_READ
+    return pages[page][offset];
+#else
+    if (!allocated[page])
+      throw std::runtime_error("readonly access of uninitialized memory");
+    return pages.at(page).at(offset);
+#endif
   }
+
+ private:
+  mutable std::unordered_map<std::size_t, bool> allocated;
 };
 }  // namespace emulator
 
