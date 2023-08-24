@@ -21,6 +21,14 @@
 
 namespace emulator {
 
+struct fetch_result {
+  u8 opcode;
+  u32 masked_instruction;
+
+  fetch_result(u8 opcode, u32 masked_instruction)
+      : opcode(opcode), masked_instruction(masked_instruction) {}
+};
+
 struct cpu {
   struct opcodes {
     /* 0x01 */ static constexpr u8 MOVE = 0x01;
@@ -68,7 +76,9 @@ struct cpu {
     /* 0xD2 */ static constexpr u8 REG_POP = 0xD2;
     /* 0xD9 */ static constexpr u8 POPCNT = 0xD9;
     /* 0xE1 */ static constexpr u8 JMP_WITH_OFFSET = 0xE1;
+    /* 0xE2 */ static constexpr u8 JMP = 0xE2;
     /* 0xEA */ static constexpr u8 BNCH_WITH_OFFSET = 0xEA;
+    /* 0xEE */ static constexpr u8 BNCH = 0xEE;
     /* 0xEB */ static constexpr u8 RND_SEED = 0xEB;
     /* 0xEC */ static constexpr u8 RND_NUM = 0xEC;
     /* 0xF0 */ static constexpr u8 EXT_INSTR = 0xF0;
@@ -139,7 +149,7 @@ struct cpu {
   u32 ctrl;
 
   // ram
-  memory<u8, 16, 4096, u32> ram;
+  memory<u8, 128, 512, u32> ram;
 
   // convenience access for decoding instructions
   std::vector<u32*> const regs = {{(u32*)&z, &a, &b, &x, &sp, &ra}};
@@ -273,12 +283,12 @@ struct cpu {
         "The CPU attempted to execute a malformed instruction");
   };
 
-  std::pair<u8, u32>
+  fetch_result
   get_next_instruction() {
     u32 instruction = fetch(pc);
     pc += 4;
-    byte opcode = instruction >> 24;
-    return std::make_pair(opcode, instruction);
+    u8 opcode = instruction >> 24;
+    return fetch_result(opcode, instruction);
   }
 
   void
@@ -418,6 +428,21 @@ struct cpu {
         set_needed_ctrl(&x);
         metaout << "Incrementing X; now " << a << endl;
       } break;
+      case opcodes::BNCH: {
+        metaout << "Conditional branch... ";
+
+        if (!ctrl_get(ctrl_bits::CTRL_TEST_TRUE)) {
+          metaout << "... not taken " << endl;
+          break;
+        }
+      } /* break; */
+      case opcodes::JMP: {
+        u32 addr = literal_decode<24>(instruction);
+        std::cout << "Moving off by " << addr << " from " << pc << std::endl;
+        pc = addr;
+
+      } break;
+
       case opcodes::BNCH_WITH_OFFSET: {
         metaout << "Conditional branch... ";
 
@@ -705,6 +730,8 @@ struct cpu {
     for (int i = 0; i < count; i++) {
       ram[addr_start + i] = bytes[i];
     }
+    std::cout << "Loaded " << count << " bytes into memory at " << addr_start
+              << std::endl;
   }
 };
 }  // namespace emulator

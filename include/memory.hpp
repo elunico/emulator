@@ -50,7 +50,11 @@ struct page {
 template <std::integral WordSize, u64 PageCount, u64 PageSize = 4096,
           std::integral BusSize = WordSize>
 struct memory {
-  std::unordered_map<std::size_t, page<WordSize, PageSize, BusSize>> pages;
+#ifdef UNSAFE_READ
+  mutable
+#endif
+      std::unordered_map<std::size_t, page<WordSize, PageSize, BusSize>>
+          pages;
 
   static std::pair<std::size_t, std::size_t>
   get_location(BusSize addr) {

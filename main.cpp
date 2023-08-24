@@ -77,25 +77,32 @@ run_program_spec(std::string_view config_name, emulator::cpu& oncpu) {
   std::vector<char> chars;
   while (!f.eof()) {
     if (f.bad() || f.fail()) throw std::runtime_error("Failed to read file 1");
+
     char c = f.get();
 
-    if (!skip_whitespace(f)) break;
-
-    if (!skip_comment(f)) break;
-
-    if (c == '=') {
-      if (!skip_whitespace(f)) break;
-
+    if (isspace(c))
+      continue;
+    else if (c == '#') {
+      while ((c = f.get()) != '\n' && !f.eof())
+        ;
+      f.unget();
+    } else if (c == '=') {
       std::vector<char> digits{};
       while (!f.eof()) {
         if (f.bad() || f.fail())
           throw std::runtime_error("Failed to read file 2");
         char c = f.get();
-        if (c == '\n') {
+        if (c != '\n' && isspace(c))
+          continue;
+        else if (c == '#') {
+          while ((c = f.get()) != '\n' && !f.eof())
+            ;
+          f.unget();
+        } else if (c == '\n') {
           std::string file = std::string(chars.begin(), chars.end());
           std::string num = std::string(digits.begin(), digits.end());
-          emulator::metaout << "Filename is " << file << " and num is " << num
-                            << emulator::endl;
+          emulator::metaout << "Filename is '" << file << "' and num is '"
+                            << num << "'" << emulator::endl;
           emulator::u64 n = std::strtoll(num.c_str(), NULL, 16);
           datae[file] = n;
           digits.clear();
@@ -105,7 +112,6 @@ run_program_spec(std::string_view config_name, emulator::cpu& oncpu) {
           digits.push_back(c);
         }
       }
-      if (!skip_comment(f)) break;
     } else {
       chars.push_back(c);
     }
@@ -139,7 +145,7 @@ main(int argc, char const** argv) {
     return 1;
   }
 
-  emulator::metaout = emulator::printer::nullprinter;
+  // emulator::metaout = emulator::printer::nullprinter;
 
   emulator::cpu proc;
 
@@ -148,6 +154,12 @@ main(int argc, char const** argv) {
   if (ext == ".prog") {
     emulator::metaout << "Running .prog file" << emulator::endl;
     run_program_file(argv[1], proc);
+  } else if (ext == "a.out") {
+    emulator::metaout << "Running assembler output" << emulator::endl;
+    auto data = load_binary_file(ext);
+    proc.set_memory(data.data(), data.size(), 0x0000);
+    proc.dump_registers();
+    proc.run();
   } else {
     emulator::metaout << "Running .spec container" << emulator::endl;
     run_program_spec(argv[1], proc);
