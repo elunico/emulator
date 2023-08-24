@@ -8,3 +8,5 @@ Makefile
 .cache
 .idea/
 .cmake
+_deps/
+tests
