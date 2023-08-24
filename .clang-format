@@ -6,3 +6,7 @@ PointerAlignment: Left
 UseTab: Never
 AlwaysBreakAfterDefinitionReturnType: All
 AlwaysBreakAfterReturnType: All
+# SpacesInParentheses: true
+# SpaceInEmptyBlock: true
+# SpaceInEmptyParentheses: true
+# SpaceBeforeParens: Always

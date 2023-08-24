@@ -10,7 +10,7 @@ set(CMAKE_BUILD_TYPE Debug)
 # set(CMAKE_CXX_FLAGS -O3)
 project(emulator)
 
-add_executable(emulate main.cpp printer.cpp utils.cpp)
+add_executable(emulate main.cpp printer.cpp utils.cpp cpu.cpp cpu_breaker.cpp)
 
 Include(FetchContent)
 
@@ -22,5 +22,5 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-add_executable(tests test.cpp utils.cpp printer.cpp)
+add_executable(tests test.cpp utils.cpp printer.cpp cpu.cpp cpu_breaker.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)

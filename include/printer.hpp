@@ -20,7 +20,12 @@ operator<<(printer& printer, T val) {
   return printer;
 }
 
-extern const char endl;
+template <>
+printer&
+operator<<(printer& printer, struct printer& (*val)(struct printer&));
+
+printer&
+endl(printer& os);
 
 extern printer metaout;
 extern printer cpuout;

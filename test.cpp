@@ -2,6 +2,7 @@
 
 #include "bytedefs.hpp"
 #include "cpu.hpp"
+#include "cpu_breaker.hpp"
 #include "printer.hpp"
 #include "utils.hpp"
 
@@ -31,5 +32,49 @@ TEST_CASE("Reading a binary file into a vector", "[read_binary_file]") {
   for (int i = 0; i < bytes.size(); i++) {
     emulator::metaout << std::hex << (int)bytes[i] << ", ";
     REQUIRE(bytes[i] == content[i]);
+  }
+}
+
+TEST_CASE("Testing increment instructions", "[increment-instructions]") {
+  SECTION("a") {
+    emulator::cpu proc;
+    emulator::cpu_breaker breaker{proc};
+
+    emulator::byte instructions[] = {
+        emulator::cpu::opcodes::LD_IM_A, 0x00, 0x00, 0x40,
+        emulator::cpu::opcodes::INC_A,   0x0,  0x0,  0x0};
+    proc.set_memory(instructions, 8, 0xF000);
+    proc.tick();
+    REQUIRE(breaker.a() == 0x40);
+    proc.tick();
+    REQUIRE(breaker.a() == 0x41);
+  }
+
+  SECTION("b") {
+    emulator::cpu proc;
+    emulator::cpu_breaker breaker{proc};
+
+    emulator::byte instructions[] = {
+        emulator::cpu::opcodes::LD_IM_B, 0x00, 0x00, 0x0,
+        emulator::cpu::opcodes::INC_B,   0x0,  0x0,  0x0};
+    proc.set_memory(instructions, 8, 0xF000);
+    proc.tick();
+    REQUIRE(breaker.b() == 0x0);
+    proc.tick();
+    REQUIRE(breaker.b() == 0x1);
+  }
+
+  SECTION("x") {
+    emulator::cpu proc;
+    emulator::cpu_breaker breaker{proc};
+
+    emulator::byte instructions[] = {
+        emulator::cpu::opcodes::LD_IM_X, 0x00, 0x00, 0xff,
+        emulator::cpu::opcodes::INC_X,   0x0,  0x0,  0x0};
+    proc.set_memory(instructions, 8, 0xF000);
+    proc.tick();
+    REQUIRE(breaker.x() == 0xff);
+    proc.tick();
+    REQUIRE(breaker.x() == 0x100);
   }
 }

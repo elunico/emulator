@@ -1,0 +1,32 @@
+#ifndef CPU_BREAKER_H
+#define CPU_BREAKER_H
+
+#include "bytedefs.hpp"
+#include "cpu.hpp"
+
+namespace emulator {
+
+struct cpu_breaker {
+  cpu& breakee;
+
+  explicit cpu_breaker(cpu& cpu);
+
+  u32
+  a() const;
+  u32
+  b() const;
+  u32
+  x() const;
+
+  f64
+  fa() const;
+  f64
+  fb() const;
+  f64
+  fx() const;
+
+  u32
+  ctrl() const;
+};
+}  // namespace emulator
+#endif
