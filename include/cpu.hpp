@@ -1,5 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
+#include <__concepts/arithmetic.h>
+
 #include <chrono>
 #include <cinttypes>
 #include <cmath>
@@ -20,6 +22,13 @@
 #include "printer.hpp"
 
 namespace emulator {
+
+template <int index>
+auto
+byte_of(std::integral auto elt) {
+  static_assert(index < sizeof(decltype(elt)), "byte index too large for type");
+  return (elt >> (index * 8)) & 0xff;
+}
 
 struct fetch_result {
   u8 opcode;
@@ -80,15 +89,15 @@ struct cpu {
     /* 0xE1 */ static constexpr u8 JMP_WITH_OFFSET = 0xE1;
     /* 0xE2 */ static constexpr u8 JMP = 0xE2;
     /* 0xEA */ static constexpr u8 BNCH_WITH_OFFSET = 0xEA;
-    /* 0xEE */ static constexpr u8 BNCH = 0xEE;
     /* 0xEB */ static constexpr u8 RND_SEED = 0xEB;
     /* 0xEC */ static constexpr u8 RND_NUM = 0xEC;
+    /* 0xEE */ static constexpr u8 BNCH = 0xEE;
     /* 0xF0 */ static constexpr u8 EXT_INSTR = 0xF0;
   };
 
   struct extended_opcodes {
     /* 0x10 */ static constexpr u8 LOAD_FIM_FA = 0x10;
-    /* 0x10 */ static constexpr u8 LOAD_FIM_FB = 0x11;
+    /* 0x11 */ static constexpr u8 LOAD_FIM_FB = 0x11;
     /* 0x81 */ static constexpr u8 FADD_DSS = 0x81;
     /* 0x82 */ static constexpr u8 FSUB_DSS = 0x82;
     /* 0x84 */ static constexpr u8 FMULT_DSS = 0x84;
@@ -179,7 +188,7 @@ struct cpu {
   [[nodiscard]] u32
   fetch(u32 const& r) const;
 
-  fetch_result
+  [[nodiscard]] fetch_result
   get_next_instruction();
 
   void
@@ -194,48 +203,49 @@ struct cpu {
   template <typename RegType>
   [[nodiscard]] std::tuple<RegType*, RegType*, RegType*>
   register_decode_dss(u32 instruction) const {
-    u32 ssb = instruction & 0xff;
-    u32 srb = (instruction & 0xff00) >> 8;
-    u32 sdb = (instruction & 0xff0000) >> 16;
-    RegType* des = register_decode<RegType>(sdb);
-    RegType* sr = register_decode<RegType>(srb);
-    RegType* sc = register_decode<RegType>(ssb);
+    u32 ssb = byte_of<0>(instruction);
+    u32 srb = byte_of<1>(instruction);
+    u32 sdb = byte_of<2>(instruction);
+    RegType* des = reg_get_by_index<RegType>(sdb);
+    RegType* sr = reg_get_by_index<RegType>(srb);
+    RegType* sc = reg_get_by_index<RegType>(ssb);
     return std::make_tuple(des, sr, sc);
   }
 
   template <typename RegType>
   [[nodiscard]] std::pair<RegType*, RegType*>
   register_decode_dsi(u32 instruction) const {
-    u32 sdb = (instruction & 0xff0000) >> 16;
-    u32 srb = (instruction & 0xff00) >> 8;
+    u32 srb = byte_of<1>(instruction);
+    u32 sdb = byte_of<2>(instruction);
 
-    RegType* des = register_decode<RegType>(sdb);
-    RegType* sr = register_decode<RegType>(srb);
+    RegType* des = reg_get_by_index<RegType>(sdb);
+    RegType* sr = reg_get_by_index<RegType>(srb);
     return std::make_pair(des, sr);
   }
 
   template <typename RegType>
   [[nodiscard]] std::pair<RegType*, RegType*>
   register_decode_both(u32 instruction) const {
-    u32 reg1 = instruction & 0xff;
-    u32 reg2 = (instruction & 0xff00) >> 8;
+    u32 reg1 = byte_of<0>(instruction);
+    u32 reg2 = byte_of<1>(instruction);
     metaout << "reg1 " << reg1 << "reg2 " << reg2 << " and " << std::hex
             << instruction << endl;
-    RegType* lhs = register_decode<RegType>(reg1);
-    RegType* rhs = register_decode<RegType>(reg2);
+    RegType* lhs = reg_get_by_index<RegType>(reg1);
+    RegType* rhs = reg_get_by_index<RegType>(reg2);
     return std::make_pair(lhs, rhs);
   }
 
   template <typename RegType>
   [[nodiscard]] RegType*
   register_decode_first(u32 instruction) const {
-    u32 reg1 = instruction & 0xff;
-    return register_decode<RegType>(reg1);
+
+    u32 reg1 = byte_of<0>(instruction);
+    return reg_get_by_index<RegType>(reg1);
   }
 
   template <typename RegType>
   [[nodiscard]] RegType*
-  register_decode(u32 reg_index) const {
+  reg_get_by_index(u32 reg_index) const {
     if constexpr (std::is_floating_point_v<RegType>) {
       if (reg_index > fregs.size()) invalid_registers();
       return fregs[reg_index];
@@ -245,12 +255,13 @@ struct cpu {
     }
   }
 
-  template <u64 N, typename Return = u32>
+  template <u64 N, typename Return = u32,
+            typename = typename std::enable_if<(sizeof(Return) * 8) >= N>::type>
   [[nodiscard]] Return
   literal_decode(u32 instruction) const noexcept {
-    u64 mask = (N == (sizeof(u64) * 8)) ? ~((u64)0) : (1llu << N) - 1llu;
+    u64 mask = (N == (sizeof(u64) * 8)) ? ~0llu : (1llu << N) - 1llu;
     u64 temporary = (instruction & mask);
-    Return value = *(Return*)&temporary;
+    Return value = *reinterpret_cast<Return*>(&temporary);
     metaout << mask << " " << temporary << " " << value << endl;
     return value;
   }

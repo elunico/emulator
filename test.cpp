@@ -17,7 +17,7 @@ TEST_CASE("Read Program Spec Ignores comments", "[read_program_spec]") {
   REQUIRE(data["program-contents/data-main.fn"] == 0xF000);
 }
 
-TEST_CASE("Reading a binary file into a vector", "[read_binary_file]") {
+TEST_CASE("Reading a binary file into a vector", "[load_binary_file]") {
   constexpr const static int arr_size = 32;
 
   emulator::byte content[arr_size] = {
@@ -33,6 +33,26 @@ TEST_CASE("Reading a binary file into a vector", "[read_binary_file]") {
     emulator::metaout << std::hex << (int)bytes[i] << ", ";
     REQUIRE(bytes[i] == content[i]);
   }
+}
+
+TEST_CASE("Halting after one tick", "[halt]") {
+  emulator::cpu proc;
+
+  emulator::byte data[4] = {0x10, 0, 0, 0};
+
+  proc.set_memory(data, 4, 0xF000);
+  proc.tick();
+  REQUIRE(proc.is_halted());
+}
+
+TEST_CASE("Halting after run", "[halt]") {
+  emulator::cpu proc;
+
+  emulator::byte data[4] = {0x10, 0, 0, 0};
+
+  proc.set_memory(data, 4, 0xF000);
+  proc.run();
+  REQUIRE(proc.is_halted());
 }
 
 TEST_CASE("Testing increment instructions", "[increment-instructions]") {

@@ -1,29 +1,8 @@
 #include "cpu.hpp"
 
+#include "bytedefs.hpp"
+
 namespace emulator {
-
-// cpu();
-
-//   void
-//   reset();
-
-//   int
-//   cycles() const noexcept;
-
-//   bool
-//   is_halted() const noexcept;
-
-//   void
-//   dump_registers(printer out = metaout) const;
-
-//   void
-//   run();
-
-//   void
-//   tick();
-
-//   void
-//   set_memory(byte const* bytes, u64 count, u64 addr_start);
 
 // public functions
 cpu::cpu() { reset(); }
@@ -139,10 +118,10 @@ cpu::ctrl_clear(u32 setbits) {
 
 void
 cpu::reg_store(u32 reg, u32 start_addr) {
-  ram[start_addr + 3] = (reg & 0xff);
-  ram[start_addr + 2] = (reg & 0xff00) >> 8;
-  ram[start_addr + 1] = (reg & 0xff0000) >> 16;
-  ram[start_addr + 0] = (reg & 0xff00000) >> 24;
+  ram[start_addr + 3] = byte_of<0>(reg);
+  ram[start_addr + 2] = byte_of<1>(reg);
+  ram[start_addr + 1] = byte_of<2>(reg);
+  ram[start_addr + 0] = byte_of<3>(reg);
 }
 
 [[nodiscard]] u32
@@ -176,7 +155,7 @@ fetch_result
 cpu::get_next_instruction() {
   u32 instruction = fetch(pc);
   pc += 4;
-  u8 opcode = instruction >> 24;
+  u8 opcode = byte_of<3>(instruction);
   return fetch_result(opcode, instruction);
 }
 
