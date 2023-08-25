@@ -1,3 +1,6 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -28,3 +31,5 @@ run_program_spec(std::string_view config_name, emulator::cpu& oncpu);
 
 void
 run_program_file(std::string_view filename, emulator::cpu& oncpu);
+
+#endif
