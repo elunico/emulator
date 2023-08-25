@@ -386,14 +386,15 @@ cpu::execute_instruction(u8 opcode, u32 instruction) {
     case opcodes::POPCNT: {
       metaout << "CPU does have popcnt!" << endl;
       auto [result, src] = register_decode_dsi<u32>(instruction);
-      // *result = __builtin_popcount(*src);
-      asm("movl %1, %%eax;"
-          "popcntl %%eax, %%eax;"
-          "movl %%eax, %0;"
-          : "=r"(*result) /* output */
-          : "r"(*src)     /* input */
-          : "%eax"        /* clobbered register */
-      );
+      // __builtin_popcount works on ARM64 Apple Silicon
+      *result = __builtin_popcount(*src);
+      // asm("movl %1, %%eax;"
+      //     "popcntl %%eax, %%eax;"
+      //     "movl %%eax, %0;"
+      //     : "=r"(*result) /* output */
+      //     : "r"(*src)     /* input */
+      //     : "%eax"        /* clobbered register */
+      // );
     } break;
     case opcodes::PRINT_I_R: {
       auto reg = register_decode_first<u32>(instruction);
