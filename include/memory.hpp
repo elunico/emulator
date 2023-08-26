@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -59,6 +60,9 @@ struct memory {
 
   static std::pair<std::size_t, std::size_t>
   get_location(BusSize addr) {
+    if (PageSize == 0) {
+      return std::make_pair(0, 0);
+    }
     auto page = (addr / PageSize);
     auto offset = addr % PageSize;
     return std::make_pair(page, offset);

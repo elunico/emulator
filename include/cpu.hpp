@@ -33,6 +33,8 @@ byte_of(T&& elt) {
   return (std::forward<T>(elt) >> (index * 8)) & 0xff;
 }
 
+u32 get_jump_offset(u32);
+
 struct fetch_result {
   u8 opcode;
   u32 masked_instruction;

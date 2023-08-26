@@ -5,6 +5,15 @@
 
 namespace emulator {
 
+u32
+get_jump_offset(u32 immediate) {
+  if (immediate & 0x800000) {
+    return ((~0x800000) & immediate);
+  } else {
+    return -immediate;
+  }
+}
+
 // public functions
 cpu::cpu() { reset(); }
 
@@ -324,12 +333,9 @@ cpu::execute_instruction(u8 opcode, u32 instruction) {
     // BNCH relies on JMP being the next case
     case opcodes::JMP_WITH_OFFSET: {
       metaout << " JUMP " << endl;
-      u32 addr = literal_decode<24>(instruction);
-      if (addr & 0x800000) {
-        pc += ((~0x800000) & addr);
-      } else {
-        pc -= addr;
-      }
+      u32 base = literal_decode<24>(instruction);
+      auto offset = get_jump_offset(base);
+      pc += offset;  // will be negative if first bit is set
       metaout << "pc is now at " << pc << " and is " << ram[pc] << endl;
     } break;
     case opcodes::HALT: {
