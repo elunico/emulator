@@ -37,9 +37,14 @@ main(int argc, char const** argv) {
     proc.set_memory(data.data(), data.size(), 0x0000);
     proc.dump_registers();
     proc.run();
-  } else {
+  } else if (ext == ".spec") {
     emulator::metaout << "Running .spec container" << emulator::endl;
     run_program_spec(argv[1], proc);
+  } else {
+    emulator::metaout << "Unknown file type: " << ext
+                      << " specify an a.out file a *.spec or a *.prog file"
+                      << emulator::endl;
+    std::terminate();
   }
   // run_program_file("jamaica.prog", proc);
 }

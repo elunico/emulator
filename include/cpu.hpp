@@ -23,11 +23,14 @@
 
 namespace emulator {
 
-template <int index>
+template <int index, typename T>
 auto
-byte_of(std::integral auto elt) {
-  static_assert(index < sizeof(decltype(elt)), "byte index too large for type");
-  return (elt >> (index * 8)) & 0xff;
+byte_of(T&& elt) {
+  static_assert(std::is_integral_v<std::remove_reference_t<T>>,
+                "T must be an integral type");
+  static_assert(index < sizeof(std::remove_reference_t<T>),
+                "byte index too large for type");
+  return (std::forward<T>(elt) >> (index * 8)) & 0xff;
 }
 
 struct fetch_result {
@@ -138,6 +141,12 @@ struct cpu {
   void
   set_memory(byte const* bytes, u64 count, u64 addr_start);
 
+  template <typename InputIterator>
+  void
+  set_memory(InputIterator start, InputIterator end, u64 addr_start) {
+    for (; start < end; start++, addr_start++) ram[addr_start] = *start;
+  }
+
  private:
   [[noreturn]] static void
   invalid_registers();
@@ -238,7 +247,6 @@ struct cpu {
   template <typename RegType>
   [[nodiscard]] RegType*
   register_decode_first(u32 instruction) const {
-
     u32 reg1 = byte_of<0>(instruction);
     return reg_get_by_index<RegType>(reg1);
   }

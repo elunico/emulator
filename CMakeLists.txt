@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS -DUNSAFE_READ)
 
+# set(CMAKE_CXX_FLAGS -DUNSAFE_READ)
 include_directories(include)
 
-# set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
-set(CMAKE_CXX_FLAGS -O3)
+# set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_CXX_FLAGS -O3)
 project(emulator)
 
 add_executable(emulate main.cpp printer.cpp utils.cpp cpu.cpp cpu_breaker.cpp)

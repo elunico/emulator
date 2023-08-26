@@ -37,4 +37,24 @@ cpu_breaker::ctrl() const {
   return breakee.ctrl;
 }
 
+u32
+cpu_breaker::sp() const {
+  return breakee.sp;
+}
+
+u32
+cpu_breaker::ra() const {
+  return breakee.ra;
+}
+
+u32
+cpu_breaker::pc() const {
+  return breakee.pc;
+}
+
+auto
+cpu_breaker::ram() const {
+  return breakee.ram;
+}
+
 }  // namespace emulator

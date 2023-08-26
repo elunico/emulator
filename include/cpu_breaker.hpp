@@ -27,6 +27,18 @@ struct cpu_breaker {
 
   u32
   ctrl() const;
+
+  u32
+  sp() const;
+
+  u32
+  ra() const;
+
+  u32
+  pc() const;
+
+  auto
+  ram() const;
 };
 }  // namespace emulator
 #endif
