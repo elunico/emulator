@@ -3,6 +3,7 @@
 
 #include <__concepts/arithmetic.h>
 
+#include <iostream>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -79,8 +80,10 @@ struct memory {
   void
   check_addr(BusSize addr) const {
     auto [p, o] = get_location(addr);
+    std::cout << " Value of p and o " << p << " " << o << " value of constants "
+              << PageCount << " and " << PageSize << std::endl;
 
-    if (p > PageCount || o > PageSize)
+    if (p >= PageCount || o >= PageSize)
       throw std::out_of_range("Address of memory is out of range");
   }
 #endif

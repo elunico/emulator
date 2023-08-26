@@ -1,8 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
+#include <cstdint>
 
 #include "bytedefs.hpp"
 #include "cpu.hpp"
 #include "cpu_breaker.hpp"
+#include "memory.hpp"
 #include "printer.hpp"
 #include "utils.hpp"
 
@@ -97,4 +99,15 @@ TEST_CASE("Testing increment instructions", "[increment-instructions]") {
     proc.tick();
     REQUIRE(breaker.x() == 0x100);
   }
+}
+
+TEST_CASE("Memory panics", "[memory-panic]") {
+  emulator::memory<uint32_t, 128, 512, uint32_t> mem;
+  std::cout << "Working memory" << std::endl;
+  REQUIRE_NOTHROW(mem.check_addr(0x10000 - 1));
+  REQUIRE_THROWS(mem.check_addr(0x10000));
+  REQUIRE_THROWS(mem.check_addr(0x10001));
+  REQUIRE_THROWS(mem.check_addr(0x10002));
+
+  REQUIRE(true);
 }
