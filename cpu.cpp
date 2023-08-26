@@ -1,6 +1,7 @@
 #include "cpu.hpp"
 
 #include "bytedefs.hpp"
+#include "printer.hpp"
 
 namespace emulator {
 
@@ -83,8 +84,8 @@ cpu::set_memory(byte const* bytes, u64 count, u64 addr_start) {
   for (int i = 0; i < count; i++) {
     ram[addr_start + i] = bytes[i];
   }
-  std::cout << "Loaded " << count << " bytes into memory at " << addr_start
-            << std::endl;
+  emulator::metaout << "Loaded " << count << " bytes into memory at "
+                    << addr_start << emulator::endl;
 }
 
 // private functions

@@ -104,6 +104,8 @@ TEST_CASE("Testing increment instructions", "[increment-instructions]") {
 TEST_CASE("Memory panics", "[memory-panic]") {
   emulator::memory<uint32_t, 128, 512, uint32_t> mem;
   std::cout << "Working memory" << std::endl;
+  REQUIRE_THROWS(mem.check_addr(-1));
+  REQUIRE_NOTHROW(mem.check_addr(0));
   REQUIRE_NOTHROW(mem.check_addr(0x10000 - 1));
   REQUIRE_THROWS(mem.check_addr(0x10000));
   REQUIRE_THROWS(mem.check_addr(0x10001));
