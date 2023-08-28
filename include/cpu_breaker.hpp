@@ -40,33 +40,33 @@ struct cpu_breaker {
   auto&
   ref_ram();
 
-  u32
+  [[nodiscard]] u32
   a() const;
-  u32
+  [[nodiscard]] u32
   b() const;
-  u32
+  [[nodiscard]] u32
   x() const;
 
-  f64
+  [[nodiscard]] f64
   fa() const;
-  f64
+  [[nodiscard]] f64
   fb() const;
-  f64
+  [[nodiscard]] f64
   fx() const;
 
-  u32
+  [[nodiscard]] u32
   ctrl() const;
 
-  u32
+  [[nodiscard]] u32
   sp() const;
 
-  u32
+  [[nodiscard]] u32
   ra() const;
 
-  u32
+  [[nodiscard]] u32
   pc() const;
 
-  auto
+  [[nodiscard]] auto
   ram() const;
 
   template <typename RegType>
