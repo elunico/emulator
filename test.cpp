@@ -10,6 +10,29 @@
 #include "printer.hpp"
 #include "utils.hpp"
 
+TEST_CASE("byte_of function", "[byte_of]") {
+  emulator::u32 number = 0x2244aa66;
+
+  auto b0 = emulator::byte_of<0>(number);
+  REQUIRE(b0 == 0x66);
+
+  auto b1 = emulator::byte_of<1>(number);
+  REQUIRE(b1 == 0xaa);
+
+  auto b2 = emulator::byte_of<2>(number);
+  REQUIRE(b2 == 0x44);
+
+  auto b3 = emulator::byte_of<3>(number);
+  REQUIRE(b3 == 0x22);
+
+  emulator::u64 bignum = 0x123456789abcdefflu;
+
+  auto lb1 = emulator::byte_of<1>(bignum);
+  auto lb3 = emulator::byte_of<3>(bignum);
+  auto lb5 = emulator::byte_of<5>(bignum);
+  auto lb7 = emulator::byte_of<7>(bignum);
+}
+
 TEST_CASE("Read Program Spec Ignores comments", "[read_program_spec]") {
   emulator::metaout = emulator::printer::nullprinter;
 
@@ -66,7 +89,7 @@ TEST_CASE("Testing increment instructions", "[increment-instructions]") {
 
     emulator::byte instructions[] = {
         emulator::cpu::opcodes::LD_IM_A, 0x00, 0x00, 0x40,
-        emulator::cpu::opcodes::INC_A,   0x0,  0x0,  0x0};
+        emulator::cpu::opcodes::INC_A,   00,   0x0,  0x0};
     proc.set_memory(instructions, 8, 0xF000);
     proc.tick();
     REQUIRE(breaker.a() == 0x40);
@@ -112,6 +135,7 @@ TEST_CASE("Memory in-bounds", "[memory-bounds]") {
   }
 }
 
+#if !defined(UNSAFE_READ) && !defined(NO_BOUNDS_CHECK_MEMORY)
 TEST_CASE("Memory out-of-bounds", "[memory-bounds]") {
   SECTION("base") {
     emulator::memory<uint32_t, 128, 512, uint32_t> mem;
@@ -142,6 +166,7 @@ TEST_CASE("Memory out-of-bounds", "[memory-bounds]") {
     REQUIRE_THROWS(mem.check_addr(-1));
   }
 }
+#endif
 
 TEST_CASE("Register Decoding", "[register-decoding]") {
   SECTION("DSS decode") {
