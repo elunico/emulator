@@ -1,6 +1,8 @@
 #ifndef CPU_H
 #define CPU_H
 #include <__concepts/arithmetic.h>
+#include <__concepts/same_as.h>
+#include <__type_traits/is_integral.h>
 
 #include <chrono>
 #include <cinttypes>
@@ -16,6 +18,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "byte_get.hpp"
 #include "bytedefs.hpp"
 #include "exceptions.hpp"
 #include "memory.hpp"
@@ -23,17 +26,14 @@
 
 namespace emulator {
 
-template <int index, typename T>
-auto
-byte_of(T&& elt) {
-  static_assert(std::is_integral_v<std::remove_reference_t<T>>,
-                "T must be an integral type");
-  static_assert(index < sizeof(std::remove_reference_t<T>),
-                "byte index too large for type");
-  return (std::forward<T>(elt) >> (index * 8)) & 0xff;
+constexpr u32
+get_jump_offset(u32 immediate) {
+  if (immediate & 0x800000) {
+    return ((~0x800000) & immediate);
+  } else {
+    return -immediate;
+  }
 }
-
-u32 get_jump_offset(u32);
 
 struct fetch_result {
   u8 opcode;

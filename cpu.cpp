@@ -5,15 +5,6 @@
 
 namespace emulator {
 
-u32
-get_jump_offset(u32 immediate) {
-  if (immediate & 0x800000) {
-    return ((~0x800000) & immediate);
-  } else {
-    return -immediate;
-  }
-}
-
 // public functions
 cpu::cpu() { reset(); }
 
@@ -90,9 +81,7 @@ cpu::tick() {
 void
 cpu::set_memory(byte const* bytes, u64 count, u64 addr_start) {
   ram.check_addr(addr_start + count);
-  for (int i = 0; i < count; i++) {
-    ram[addr_start + i] = bytes[i];
-  }
+  for (int i = 0; i < count; i++) ram[addr_start + i] = bytes[i];
   emulator::metaout << "Loaded " << count << " bytes into memory at "
                     << addr_start << emulator::endl;
 }
@@ -166,7 +155,7 @@ cpu::get_next_instruction() {
   u32 instruction = fetch(pc);
   pc += 4;
   u8 opcode = byte_of<3>(instruction);
-  return fetch_result(opcode, instruction);
+  return {opcode, instruction};
 }
 
 void
