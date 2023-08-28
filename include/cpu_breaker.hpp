@@ -11,6 +11,12 @@ struct cpu_breaker {
 
   explicit cpu_breaker(cpu& cpu);
 
+  u32
+  fetch(u32 const& addr);
+
+  fetch_result
+  get_next_instruction();
+
   u32&
   ref_a();
   u32&

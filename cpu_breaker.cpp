@@ -4,6 +4,16 @@ namespace emulator {
 
 cpu_breaker::cpu_breaker(cpu& cpu) : breakee(cpu) {}
 
+u32
+cpu_breaker::fetch(const u32& addr) {
+  return breakee.fetch(addr);
+}
+
+fetch_result
+cpu_breaker::get_next_instruction() {
+  return breakee.get_next_instruction();
+}
+
 u32&
 cpu_breaker::ref_a() {
   return breakee.a;

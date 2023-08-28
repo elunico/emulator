@@ -166,6 +166,44 @@ TEST_CASE("Memory out-of-bounds", "[memory-bounds]") {
     REQUIRE_THROWS(mem.check_addr(-1));
   }
 }
+
+TEST_CASE("MEMORY ACCESS", "[memory-access]") {
+  SECTION("page access big") {
+    emulator::page<emulator::u32, 4096> pg;
+
+    for (int i = 0; i < 4096; i++) {
+      pg[i] = static_cast<emulator::u8>(i);
+    }
+
+    REQUIRE(pg[100] == 100);
+    REQUIRE(pg[4095] == static_cast<emulator::u8>(4095));
+    REQUIRE_THROWS(pg[4096]);
+  }
+
+  SECTION("page access 1") {
+    emulator::page<emulator::u32, 1> pg;
+
+    for (int i = 0; i < 1; i++) {
+      pg[i] = static_cast<emulator::u8>(i);
+    }
+
+    REQUIRE(pg[0] == 0);
+    REQUIRE_THROWS(pg[1]);
+  }
+
+  SECTION("memory access") {
+    emulator::memory<emulator::u32, 2, 4096> pg;
+
+    for (int i = 0; i < 4096 * 2; i++) {
+      pg[i] = static_cast<emulator::u8>(i);
+    }
+
+    REQUIRE(pg[100] == 100);
+    REQUIRE(pg[4095] == static_cast<emulator::u8>(4095));
+    REQUIRE_THROWS(pg[4096 * 2]);
+  }
+}
+
 #endif
 
 TEST_CASE("Register Decoding", "[register-decoding]") {
@@ -256,4 +294,41 @@ TEST_CASE("Jump Offset calculation", "[jumps]") {
     auto i = emulator::get_jump_offset(instruction);
     REQUIRE(i == -0x7fffff);
   }
+}
+
+TEST_CASE("fetch from cpu", "[fetch]") {
+  emulator::cpu proc;
+  emulator::cpu_breaker breaker(proc);
+
+  emulator::byte b[] = {0x01, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8};
+
+  proc.set_memory(b, 8, 0x0000);
+
+  REQUIRE(breaker.fetch(0) == 0x01020304);
+  REQUIRE(breaker.fetch(1) == 0x02030405);
+  REQUIRE(breaker.fetch(4) == 0x05060708);
+}
+
+TEST_CASE("getting instruction", "[get-instructions]") {
+  emulator::cpu proc;
+  emulator::cpu_breaker breaker(proc);
+
+  emulator::byte b[] = {emulator::cpu::opcodes::LD_IM_A, 0x10, 0x20, 0x30,
+                        emulator::cpu::opcodes::XOR_R,   0x01, 0x01, 0x00};
+
+  proc.set_memory(b, 8, 0xF000);
+
+  auto old_pc = breaker.pc();
+  auto result = breaker.get_next_instruction();
+
+  REQUIRE(old_pc == (breaker.pc() - 4));
+
+  REQUIRE(result.opcode == emulator::cpu::opcodes::LD_IM_A);
+  REQUIRE(result.instruction == 0xA5102030);
+
+  result = breaker.get_next_instruction();
+
+  REQUIRE(old_pc == (breaker.pc() - 8));
+  REQUIRE(result.opcode == emulator::cpu::opcodes::XOR_R);
+  REQUIRE(result.instruction == 0x05010100);
 }

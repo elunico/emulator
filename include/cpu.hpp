@@ -37,10 +37,10 @@ get_jump_offset(u32 immediate) {
 
 struct fetch_result {
   u8 opcode;
-  u32 masked_instruction;
+  u32 instruction;
 
-  fetch_result(u8 opcode, u32 masked_instruction)
-      : opcode(opcode), masked_instruction(masked_instruction) {}
+  fetch_result(u8 opcode, u32 instruction)
+      : opcode(opcode), instruction(instruction) {}
 };
 
 struct cpu {
