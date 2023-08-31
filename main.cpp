@@ -6,9 +6,9 @@
 #include <ios>
 #include <map>
 #include <stdexcept>
-#include <string_view>
 #include <vector>
 
+#include "backwards.hpp"
 #include "bytedefs.hpp"
 #include "cpu.hpp"
 #include "emulator.hpp"
@@ -27,7 +27,7 @@ main(int argc, char const** argv) {
   emulator::cpu proc;
 
   std::string name = argv[1];
-  auto ext = std::string_view{name.end() - 5, name.end()};
+  auto ext = string_section(name, name.size() - 5, name.size());
   if (ext == ".prog") {
     emulator::metaout << "Running .prog file" << emulator::endl;
     run_program_file(argv[1], proc);
