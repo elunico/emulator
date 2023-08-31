@@ -7,6 +7,9 @@ include_directories(include)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+# set(CMAKE_CXX_FLAGS -Wall)
+set(CMAKE_CXX_FLAGS "-Wpedantic -Wall")
+
 # set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_CXX_FLAGS -O3)
 project(emulator)

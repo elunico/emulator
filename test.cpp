@@ -25,12 +25,17 @@ TEST_CASE("byte_of function", "[byte_of]") {
   auto b3 = emulator::byte_of<3>(number);
   REQUIRE(b3 == 0x22);
 
-  emulator::u64 bignum = 0x123456789abcdefflu;
+  emulator::u64 bignum = 0x12'34'56'78'9a'bc'de'fflu;
 
   auto lb1 = emulator::byte_of<1>(bignum);
   auto lb3 = emulator::byte_of<3>(bignum);
   auto lb5 = emulator::byte_of<5>(bignum);
   auto lb7 = emulator::byte_of<7>(bignum);
+
+  REQUIRE(lb1 == 0xde);
+  REQUIRE(lb3 == 0x9a);
+  REQUIRE(lb5 == 0x56);
+  REQUIRE(lb7 == 0x12);
 }
 
 TEST_CASE("Read Program Spec Ignores comments", "[read_program_spec]") {
