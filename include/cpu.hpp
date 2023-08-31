@@ -1,9 +1,5 @@
 #ifndef CPU_H
 #define CPU_H
-#include <__concepts/arithmetic.h>
-#include <__concepts/same_as.h>
-#include <__type_traits/is_integral.h>
-
 #include <chrono>
 #include <cinttypes>
 #include <cmath>

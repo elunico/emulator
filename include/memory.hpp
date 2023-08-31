@@ -1,8 +1,6 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <__concepts/arithmetic.h>
-
 #include <iostream>
 #include <stdexcept>
 #include <type_traits>
