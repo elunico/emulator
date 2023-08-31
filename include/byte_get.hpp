@@ -1,16 +1,21 @@
 #ifndef BYTE_GET_HPP
 #define BYTE_GET_HPP
 
+#include <cstdint>
+#include <type_traits>
+
+namespace emulator {
+template <typename T>
+struct ByteGettableSize {
+  static const std::size_t size = sizeof(std::remove_reference_t<T>);
+};
+}  // namespace emulator
+
 #if __cplusplus >= 202002L
 
 #include <concepts>
 
 namespace emulator {
-
-template <typename T>
-struct ByteGettableSize {
-  static const std::size_t size = sizeof(std::remove_reference_t<T>);
-};
 
 template <int index, typename T>
 concept ByteShiftGetable = requires(T t) {

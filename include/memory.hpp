@@ -8,12 +8,12 @@
 #include <utility>
 #include <vector>
 
+#include "backwards.hpp"
 #include "bytedefs.hpp"
 
 namespace emulator {
 
-template <std::integral WordSize, u64 ByteCount,
-          std::integral BusSize = WordSize>
+template <INTEGRAL WordSize, u64 ByteCount, INTEGRAL BusSize = WordSize>
 struct page {
   WordSize* bank;
   explicit page() { bank = new WordSize[ByteCount]; }
@@ -47,8 +47,8 @@ struct page {
 #endif
 };
 
-template <std::integral WordSize, u64 PageCount, u64 PageSize = 4096,
-          std::integral BusSize = WordSize>
+template <INTEGRAL WordSize, u64 PageCount, u64 PageSize = 4096,
+          INTEGRAL BusSize = WordSize>
 struct memory {
 #ifdef UNSAFE_READ
   mutable
