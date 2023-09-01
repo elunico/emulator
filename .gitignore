@@ -10,3 +10,5 @@ Makefile
 .cmake
 _deps/
 tests
+cmake-build-debug/
+.DS_Store

@@ -109,7 +109,7 @@ parse_program_spec(std::string const& config_name) {
 
 void
 run_program_spec(std::string_view config_name, emulator::cpu& oncpu) {
-  auto datae = parse_program_spec(config_name);
+  auto datae = parse_program_spec(static_cast<std::string>(config_name));
 
   for (auto const& [file, addr] : datae) {
     auto data = load_binary_file(file);
@@ -121,7 +121,7 @@ run_program_spec(std::string_view config_name, emulator::cpu& oncpu) {
 
 void
 run_program_file(std::string_view filename, emulator::cpu& oncpu) {
-  auto data = load_binary_file(filename);
+  auto data = load_binary_file(static_cast<std::string>(filename));
 
   std::vector<emulator::byte> bootstrap = {{0xE1, 0x00, 0xC0, 0x04}};
 

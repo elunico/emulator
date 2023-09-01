@@ -33,7 +33,7 @@ main(int argc, char const** argv) {
     run_program_file(argv[1], proc);
   } else if (ext == "a.out") {
     emulator::metaout << "Running assembler output" << emulator::endl;
-    auto data = load_binary_file(ext);
+    auto data = load_binary_file(static_cast<std::string>(ext));
     proc.set_memory(data.data(), data.size(), 0x0000);
     proc.dump_registers();
     proc.run();
