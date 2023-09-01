@@ -1,5 +1,3 @@
-#include <_types/_uint32_t.h>
-
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 
