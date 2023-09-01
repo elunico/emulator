@@ -13,7 +13,7 @@ bytes_dump(emulator::byte* start, emulator::byte* end) {
 }
 
 std::vector<emulator::byte>
-load_binary_file(std::string_view filename) {
+load_binary_file(std::string const& filename) {
   emulator::metaout << "Attempting to read " << filename << emulator::endl;
   std::ifstream f;
   f.open(filename, std::ios::binary);
@@ -55,7 +55,7 @@ skip_comment(std::ifstream& f) {
 }
 
 std::map<std::string, emulator::u64>
-parse_program_spec(std::string_view config_name) {
+parse_program_spec(std::string const& config_name) {
   std::ifstream f;
   f.open(config_name);
 
