@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14.5)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -8,13 +8,13 @@ include_directories(include)
 set(CMAKE_BUILD_TYPE Debug)
 
 # set(CMAKE_CXX_FLAGS -Wall)
-set(CMAKE_CXX_FLAGS "-Wpedantic -Wall")
+set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -g")
 
 # set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_CXX_FLAGS -O3)
 project(emulator)
 
-add_executable(emulate main.cpp printer.cpp utils.cpp cpu.cpp cpu_breaker.cpp)
+add_executable(emulate src/main.cpp src/printer.cpp src/utils.cpp src/cpu.cpp src/cpu_breaker.cpp)
 
 Include(FetchContent)
 
@@ -26,5 +26,5 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-add_executable(tests test.cpp utils.cpp printer.cpp cpu.cpp cpu_breaker.cpp)
+add_executable(tests test/test.cpp src/utils.cpp src/printer.cpp src/cpu.cpp src/cpu_breaker.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)

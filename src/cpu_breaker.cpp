@@ -67,55 +67,55 @@ cpu_breaker::ref_ram() {
   return breakee.ram;
 }
 
-u32
+u32 const&
 cpu_breaker::a() const {
   return breakee.a;
 }
 
-u32
+u32 const&
 cpu_breaker::b() const {
   return breakee.b;
 }
 
-u32
+u32 const&
 cpu_breaker::x() const {
   return breakee.x;
 }
 
-f64
+f64 const&
 cpu_breaker::fa() const {
   return breakee.fa;
 }
-f64
+f64 const&
 cpu_breaker::fb() const {
   return breakee.fb;
 }
-f64
+f64 const&
 cpu_breaker::fx() const {
   return breakee.fx;
 }
 
-u32
+u32 const&
 cpu_breaker::ctrl() const {
   return breakee.ctrl;
 }
 
-u32
+u32 const&
 cpu_breaker::sp() const {
   return breakee.sp;
 }
 
-u32
+u32 const&
 cpu_breaker::ra() const {
   return breakee.ra;
 }
 
-u32
+u32 const&
 cpu_breaker::pc() const {
   return breakee.pc;
 }
 
-auto
+auto const&
 cpu_breaker::ram() const {
   return breakee.ram;
 }
