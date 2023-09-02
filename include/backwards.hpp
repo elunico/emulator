@@ -17,7 +17,7 @@ string_section(std::string const& s, int start, int end) {
 
 inline auto
 string_section(std::string const& s, int start, int end) {
-  return s.substring(start, end);
+  return s.substr(start, end);
 }
 
 #endif

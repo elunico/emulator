@@ -56,8 +56,8 @@ struct memory {
       std::unordered_map<std::size_t, page<WordSize, PageSize, BusSize>>
           pages;
 
-  static std::pair<std::size_t, std::size_t>
-  get_location(BusSize addr) {
+  static auto
+  get_location(BusSize addr) -> std::pair<std::size_t, std::size_t> {
     if (PageSize == 0) {
       return std::make_pair(0, 0);
     }

@@ -5,7 +5,7 @@ namespace emulator {
 cpu_breaker::cpu_breaker(cpu& cpu) : breakee(cpu) {}
 
 u32
-cpu_breaker::fetch(const u32& addr) {
+cpu_breaker::fetch(const u32& addr) const {
   return breakee.fetch(addr);
 }
 

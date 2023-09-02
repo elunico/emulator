@@ -11,8 +11,8 @@ struct cpu_breaker {
 
   explicit cpu_breaker(cpu& cpu);
 
-  u32
-  fetch(u32 const& addr);
+  [[nodiscard]] u32
+  fetch(u32 const& addr) const;
 
   fetch_result
   get_next_instruction();
