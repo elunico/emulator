@@ -30,6 +30,10 @@ parse_print_command(std::string s) {
     tokens.push_back(tok);
   }
 
+  if (tokens.size() == 1) {
+    return std::nullopt;
+  }
+
   int num_index = 1;
   if (auto p = std::find(formats.begin(), formats.end(), tokens[1]);
       p != formats.end()) {
