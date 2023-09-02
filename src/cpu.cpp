@@ -2,6 +2,7 @@
 
 #include <ios>
 #include <iostream>
+#include <optional>
 #include <string>
 
 #include "bytedefs.hpp"
@@ -58,34 +59,33 @@ cpu::dump_registers(printer out) const {
 }
 
 void
-cpu::debug_tick(int& prevc) {
+cpu::debug_tick(std::string& prevline) {
   std::cout << "Enter a command: (d)ump regs, (p)rint ram, (n)ext "
                "instruction, (c)ontinue"
             << std::endl;
   std::string line;
   std::getline(std::cin, line);
-  char c = line[0];
 reswitch:
+  char c = line[0];
   switch (c) {
     case '\0':
-      c = prevc;
+      line = prevline;
       goto reswitch;
     case 'd':
       dump_registers();
       break;
     case 'p': {
-      std::string buf;
-      std::cout << "Enter the start address: ";
-      std::getline(std::cin, buf);
-      std::string s = buf;
-      std::cout << "Enter the end address: ";
-      std::getline(std::cin, buf);
-      std::string e = buf;
-      int start = parse_int(s);
-      int end = parse_int(e);
-      for (; start < end; start++)
-        print_byte(std::cout, ram[start], spaced::on);
-      std::cout << std::endl;
+      auto p = parse_print_command(line);
+      if (p == std::nullopt) {
+        std::cout << "Format of the p command: p [ HEX | DEC | OCT ] START END"
+                  << std::endl;
+        break;
+      } else {
+        for (; p->start < p->end; p->start++) {
+          print_byte(std::cout, ram[p->start], spaced::on, p->format);
+        }
+        std::cout << std::endl;
+      }
     } break;
     case 'n':
       tick();
@@ -97,17 +97,17 @@ reswitch:
       debugging = false;
       break;
   }
-  prevc = c;
+  prevline = line;
 }
 
 void
 cpu::run() {
   using us = std::chrono::microseconds;
   auto start = std::chrono::system_clock::now();
-  int pc;
+  std::string pline;
   while (!halted) {
     if (debugging) {
-      debug_tick(pc);
+      debug_tick(pline);
     } else {
       tick();
     }

@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "bytedefs.hpp"
@@ -35,9 +37,20 @@ run_program_file(std::string_view filename, emulator::cpu& oncpu);
 int
 parse_int(std::string const& s);
 
+enum class byte_format { hex, dec, oct, bin };
+
+struct memory_print_statement {
+  int start, end;
+  byte_format format;
+};
+
+std::optional<memory_print_statement>
+parse_print_command(std::string line);
+
 enum class spaced { off, on };
 
 void
-print_byte(std::ostream& os, emulator::byte b, spaced spaced_);
+print_byte(std::ostream& os, emulator::byte b, spaced spaced_,
+           byte_format format = byte_format::hex);
 
 #endif

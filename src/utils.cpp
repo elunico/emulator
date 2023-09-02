@@ -1,11 +1,74 @@
 #include "utils.hpp"
 
 #include <cstdio>
+#include <cstring>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 #include <string_view>
+#include <unordered_map>
+
+static std::vector<std::string> formats = {{"hex", "oct", "dec", "bin"}};
+static std::unordered_map<std::string, byte_format> format_map = {
+    {std::make_pair("hex", byte_format::hex),
+     std::make_pair("dec", byte_format::dec),
+     std::make_pair("oct", byte_format::oct),
+     std::make_pair("bin", byte_format::bin)}};
+
+std::optional<memory_print_statement>
+parse_print_command(std::string s) {
+  memory_print_statement retval{};
+
+  std::vector<std::string> tokens;
+
+  std::stringstream ss{s};
+  std::string tok;
+
+  while (std::getline(ss, tok, ' ')) {
+    std::transform(tok.begin(), tok.end(), tok.begin(), tolower);
+    tokens.push_back(tok);
+  }
+
+  int num_index = 1;
+  if (auto p = std::find(formats.begin(), formats.end(), tokens[1]);
+      p != formats.end()) {
+    retval.format = format_map[*p];
+    num_index++;
+  } else {
+    retval.format = byte_format::hex;
+  }
+
+  try {
+    retval.start = parse_int(tokens[num_index]);
+    retval.end = parse_int(tokens[num_index + 1]);
+  } catch (std::invalid_argument e) {
+    return std::nullopt;
+  }
+
+  return std::make_optional(retval);
+}
 
 void
-print_byte(std::ostream& os, emulator::byte b, spaced spaced_) {
-  os << std::uppercase << std::hex << std::noshowbase << (b < 16 ? "0" : "")
+print_byte(std::ostream& os, emulator::byte b, spaced spaced_,
+           byte_format format) {
+  switch (format) {
+    case byte_format::hex:
+      os << std::hex;
+      break;
+    case byte_format::dec:
+      os << std::dec;
+      break;
+    case byte_format::oct:
+      os << std::oct;
+      break;
+    case byte_format::bin:
+      std::cerr << "Not currently supported" << std::endl;
+      std::terminate();
+      break;
+  }
+
+  os << std::uppercase << std::noshowbase << (b < 16 ? "0" : "")
      << static_cast<emulator::u32>(b);
   if (spaced_ == spaced::on) {
     os << " ";

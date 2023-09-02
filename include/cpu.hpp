@@ -139,7 +139,7 @@ struct cpu {
   tick();
 
   void
-  debug_tick(int&);
+  debug_tick(std::string&);
 
   void
   set_memory(byte const* bytes, u64 count, u64 addr_start);
