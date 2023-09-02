@@ -4,6 +4,26 @@
 #include <string_view>
 
 void
+print_byte(std::ostream& os, emulator::byte b, spaced spaced_) {
+  os << std::uppercase << std::hex << std::noshowbase << (b < 16 ? "0" : "")
+     << static_cast<emulator::u32>(b);
+  if (spaced_ == spaced::on) {
+    os << " ";
+  }
+}
+
+int
+parse_int(std::string const& s) {
+  int res;
+  if (s.starts_with("0x")) {
+    res = std::stoi(s.substr(2), nullptr, 16);
+  } else {
+    res = std::stoi(s);
+  }
+  return res;
+}
+
+void
 bytes_dump(emulator::byte* start, emulator::byte const* end) {
   for (; start < end; start++) {
     std::cout << std::hex << std::noshowbase << (*start < 16 ? "0" : "")

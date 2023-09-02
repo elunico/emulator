@@ -32,4 +32,12 @@ run_program_spec(std::string_view config_name, emulator::cpu& oncpu);
 void
 run_program_file(std::string_view filename, emulator::cpu& oncpu);
 
+int
+parse_int(std::string const& s);
+
+enum class spaced { off, on };
+
+void
+print_byte(std::ostream& os, emulator::byte b, spaced spaced_);
+
 #endif

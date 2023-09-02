@@ -1,6 +1,7 @@
 #include "cpu.hpp"
 
 #include <ios>
+#include <iostream>
 #include <string>
 
 #include "bytedefs.hpp"
@@ -63,11 +64,12 @@ cpu::debug_tick(int& prevc) {
             << std::endl;
   std::string line;
   std::getline(std::cin, line);
-  // reswitch:
-  switch (line[0]) {
-    // case '\n':
-    //   c = prevc;
-    //   goto reswitch;
+  char c = line[0];
+reswitch:
+  switch (c) {
+    case '\0':
+      c = prevc;
+      goto reswitch;
     case 'd':
       dump_registers();
       break;
@@ -79,23 +81,10 @@ cpu::debug_tick(int& prevc) {
       std::cout << "Enter the end address: ";
       std::getline(std::cin, buf);
       std::string e = buf;
-      int start, end;
-      if (s.starts_with("0x")) {
-        start = std::stoi(s.substr(2), nullptr, 16);
-      } else {
-        start = std::stoi(s);
-      }
-      if (e.starts_with("0x")) {
-        end = std::stoi(e.substr(2), nullptr, 16);
-      } else {
-        end = std::stoi(e);
-      }
-      for (; start < end; start++) {
-        auto v = ram[start];
-        std::cout << std::uppercase << std::hex << std::noshowbase
-                  << (v < 16 ? "0" : "") << static_cast<emulator::u32>(v)
-                  << " ";
-      }
+      int start = parse_int(s);
+      int end = parse_int(e);
+      for (; start < end; start++)
+        print_byte(std::cout, ram[start], spaced::on);
       std::cout << std::endl;
     } break;
     case 'n':
@@ -108,7 +97,7 @@ cpu::debug_tick(int& prevc) {
       debugging = false;
       break;
   }
-  prevc = line[0];
+  prevc = c;
 }
 
 void
