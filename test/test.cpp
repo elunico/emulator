@@ -335,3 +335,20 @@ TEST_CASE("getting instruction", "[get-instructions]") {
   REQUIRE(result.opcode == emulator::cpu::opcodes::XOR_R);
   REQUIRE(result.instruction == 0x05010100);
 }
+
+TEST_CASE("getting correct memory address", "[memory-offset-calculation]") {
+  SECTION("later") {
+    auto const& [page, offset] =
+        emulator::memory<emulator::u32, 512, 128>::get_location(405);
+
+    REQUIRE(page == (405 / 128));
+    REQUIRE(offset == (405 % 128));
+  }
+
+  SECTION("earlier") {
+    auto const& [page, offset] = emulator::memory<emulator::u32, 128, 512>::get_location(405);
+
+    REQUIRE(page == 0);
+    REQUIRE(offset == 405);
+  }
+}
