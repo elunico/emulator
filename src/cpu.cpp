@@ -59,7 +59,7 @@ cpu::dump_registers(printer out) const {
 }
 
 void
-cpu::debug_tick(std::string& prevline) {
+cpu::debug_tick(std::string& prevline, long long& cpu_time) {
   std::cout << "Enter a command: (d)ump regs, (p)rint ram, (n)ext "
                "instruction, (c)ontinue"
             << std::endl;
@@ -88,7 +88,7 @@ reswitch:
       }
     } break;
     case 'n':
-      tick();
+      cpu_time += tick().value_or(0);
       break;
     case 'c':
       debugging = false;
@@ -102,30 +102,36 @@ reswitch:
 
 void
 cpu::run() {
+  long long cpu_time = 0;
   using us = std::chrono::microseconds;
   auto start = std::chrono::system_clock::now();
   std::string pline;
   while (!halted) {
     if (debugging) {
-      debug_tick(pline);
+      debug_tick(pline, cpu_time);
     } else {
-      tick();
+      auto o = tick();
+      cpu_time += o.value_or(0);
     }
   }
   auto end = std::chrono::system_clock::now();
   auto mseconds = std::chrono::duration_cast<us>(end - start).count();
 
-  metaout << std::dec << "CPU Ran for " << cycles() << " cycles in " << mseconds
-          << " us." << endl;
+  metaout << std::dec << "CPU Ran for " << cycles() << " cycles." << endl;
+  metaout << "CPU: " << cpu_time << " us. " << endl;
+  metaout << "REAL: " << mseconds << " us. " << endl;
 }
 
-void
-cpu::tick() {
+auto
+cpu::tick() -> std::optional<long long> {
+  if (halted) return std::nullopt;
+
+  using us = std::chrono::microseconds;
+  auto start = std::chrono::system_clock::now();
+
   m_cycles++;
   metaout << "tick" << endl;
   zero_check();
-
-  if (halted) return;
 
   auto [opcode, instruction] = get_next_instruction();
   if (ctrl_get(ctrl_bits::CTRL_EXT_FNC)) {
@@ -133,6 +139,9 @@ cpu::tick() {
   } else {
     execute_instruction(opcode, instruction);
   }
+  auto end = std::chrono::system_clock::now();
+  auto mseconds = std::chrono::duration_cast<us>(end - start).count();
+  return std::make_optional(mseconds);
 }
 
 void

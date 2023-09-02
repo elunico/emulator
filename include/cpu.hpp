@@ -135,11 +135,11 @@ struct cpu {
   void
   run();
 
-  void
-  tick();
+  auto
+  tick() -> std::optional<long long>;
 
   void
-  debug_tick(std::string&);
+  debug_tick(std::string&, long long&);
 
   void
   set_memory(byte const* bytes, u64 count, u64 addr_start);
