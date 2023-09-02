@@ -1,12 +1,18 @@
 #include "cpu.hpp"
 
+#include <ios>
+#include <string>
+
 #include "bytedefs.hpp"
 #include "printer.hpp"
+#include "utils.hpp"
 
 namespace emulator {
 
 // public functions
 cpu::cpu() { reset(); }
+
+bool cpu::debugging = false;
 
 void
 cpu::reset() {
@@ -51,10 +57,72 @@ cpu::dump_registers(printer out) const {
 }
 
 void
+cpu::debug_tick(int& prevc) {
+  std::cout << "Enter a command: (d)ump regs, (p)rint ram, (n)ext "
+               "instruction, (c)ontinue"
+            << std::endl;
+  std::string line;
+  std::getline(std::cin, line);
+  // reswitch:
+  switch (line[0]) {
+    // case '\n':
+    //   c = prevc;
+    //   goto reswitch;
+    case 'd':
+      dump_registers();
+      break;
+    case 'p': {
+      std::string buf;
+      std::cout << "Enter the start address: ";
+      std::getline(std::cin, buf);
+      std::string s = buf;
+      std::cout << "Enter the end address: ";
+      std::getline(std::cin, buf);
+      std::string e = buf;
+      int start, end;
+      if (s.starts_with("0x")) {
+        start = std::stoi(s.substr(2), nullptr, 16);
+      } else {
+        start = std::stoi(s);
+      }
+      if (e.starts_with("0x")) {
+        end = std::stoi(e.substr(2), nullptr, 16);
+      } else {
+        end = std::stoi(e);
+      }
+      for (; start < end; start++) {
+        auto v = ram[start];
+        std::cout << std::uppercase << std::hex << std::noshowbase
+                  << (v < 16 ? "0" : "") << static_cast<emulator::u32>(v)
+                  << " ";
+      }
+      std::cout << std::endl;
+    } break;
+    case 'n':
+      tick();
+      break;
+    case 'c':
+      debugging = false;
+      break;
+    case EOF:
+      debugging = false;
+      break;
+  }
+  prevc = line[0];
+}
+
+void
 cpu::run() {
   using us = std::chrono::microseconds;
   auto start = std::chrono::system_clock::now();
-  while (!halted) tick();
+  int pc;
+  while (!halted) {
+    if (debugging) {
+      debug_tick(pc);
+    } else {
+      tick();
+    }
+  }
   auto end = std::chrono::system_clock::now();
   auto mseconds = std::chrono::duration_cast<us>(end - start).count();
 

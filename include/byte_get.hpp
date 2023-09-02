@@ -18,13 +18,14 @@ struct ByteGettableSize {
 namespace emulator {
 
 template <int index, typename T>
-concept ByteShiftGetable = requires(T t) {
-  { t >> t } noexcept -> std::same_as<std::remove_reference_t<T>>;
-  { t& t } noexcept -> std::same_as<std::remove_reference_t<T>>;
-  { t* t } noexcept -> std::same_as<std::remove_reference_t<T>>;
-  requires(std::is_convertible_v<int, std::remove_reference_t<T>>);
-  requires(index < ByteGettableSize<T>::size);
-};
+concept ByteShiftGetable =
+    requires(T t) {
+      { t >> t } noexcept -> std::same_as<std::decay_t<T>>;
+      { t& t } noexcept -> std::same_as<std::decay_t<T>>;
+      { t* t } noexcept -> std::same_as<std::decay_t<T>>;
+      requires(std::is_convertible_v<int, std::decay_t<T>>);
+      requires(index < ByteGettableSize<T>::size);
+    };
 
 }  // namespace emulator
 
@@ -36,8 +37,6 @@ concept ByteShiftGetable = requires(T t) {
   std::enable_if_t < index<ByteGettableSize<T>::size, T>
 
 #endif
-
-#include <type_traits>
 
 namespace emulator {
 

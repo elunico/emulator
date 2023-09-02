@@ -12,7 +12,7 @@
 #include "printer.hpp"
 
 void
-bytes_dump(emulator::byte* start, emulator::byte* end);
+bytes_dump(emulator::byte* start, const emulator::byte* end);
 
 std::vector<emulator::byte>
 load_binary_file(std::string const& filename);

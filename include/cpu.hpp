@@ -42,6 +42,8 @@ struct fetch_result {
 struct cpu {
   friend struct cpu_breaker;
 
+  static bool debugging;
+
   struct opcodes {
     /* 0x01 */ static constexpr u8 MOVE = 0x01;
     /* 0x02 */ static constexpr u8 AND_R = 0x02;
@@ -135,6 +137,9 @@ struct cpu {
 
   void
   tick();
+
+  void
+  debug_tick(int&);
 
   void
   set_memory(byte const* bytes, u64 count, u64 addr_start);

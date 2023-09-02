@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <ios>
 #include <map>
@@ -22,9 +23,12 @@ main(int argc, char const** argv) {
     return 1;
   }
 
-  // emulator::metaout = emulator::printer::nullprinter;
-
   emulator::cpu proc;
+
+  auto debugging_env = getenv("DEBUGGING");
+  if (debugging_env != nullptr && !std::strcmp(debugging_env, "true")) {
+    emulator::cpu::debugging = true;
+  }
 
   std::string name = argv[1];
   auto ext = string_section(name, name.size() - 5, name.size());
@@ -33,7 +37,7 @@ main(int argc, char const** argv) {
     run_program_file(argv[1], proc);
   } else if (ext == "a.out") {
     emulator::metaout << "Running assembler output" << emulator::endl;
-    auto data = load_binary_file(static_cast<std::string>(ext));
+    auto data = load_binary_file(static_cast<std::string>(argv[1]));
     proc.set_memory(data.data(), data.size(), 0x0000);
     proc.dump_registers();
     proc.run();

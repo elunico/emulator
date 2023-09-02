@@ -4,7 +4,7 @@
 #include <string_view>
 
 void
-bytes_dump(emulator::byte* start, emulator::byte* end) {
+bytes_dump(emulator::byte* start, emulator::byte const* end) {
   for (; start < end; start++) {
     std::cout << std::hex << std::noshowbase << (*start < 16 ? "0" : "")
               << static_cast<emulator::u32>(*start);
@@ -19,7 +19,7 @@ load_binary_file(std::string const& filename) {
   f.open(filename, std::ios::binary);
 
   std::vector<emulator::byte> data;
-  char buf;
+  int buf;
   while (!f.eof()) {
     if (f.bad() || f.fail())
       throw std::runtime_error("Failed to read file load");
@@ -32,7 +32,7 @@ load_binary_file(std::string const& filename) {
 bool
 skip_whitespace(std::ifstream& f) {
   while (!f.eof()) {
-    char c = f.get();
+    int c = f.get();
     if (!std::isspace(c)) {
       f.unget();  // Put back the non-whitespace character
       return true;
@@ -43,7 +43,7 @@ skip_whitespace(std::ifstream& f) {
 
 bool
 skip_comment(std::ifstream& f) {
-  char c = f.get();
+  int c = f.get();
   if (c == '#') {
     // Ignore characters until the end of the line
     while (c != '\n' && !f.eof()) c = f.get();
@@ -65,7 +65,7 @@ parse_program_spec(std::string const& config_name) {
   while (!f.eof()) {
     if (f.bad() || f.fail()) throw std::runtime_error("Failed to read file 1");
 
-    char c = f.get();
+    int c = f.get();
 
     if (isspace(c))
       continue;
@@ -78,7 +78,7 @@ parse_program_spec(std::string const& config_name) {
       while (!f.eof()) {
         if (f.bad() || f.fail())
           throw std::runtime_error("Failed to read file 2");
-        char c = f.get();
+        c = f.get();
         if (c != '\n' && isspace(c))
           continue;
         else if (c == '#') {
@@ -90,17 +90,17 @@ parse_program_spec(std::string const& config_name) {
           std::string num = std::string(digits.begin(), digits.end());
           emulator::metaout << "Filename is '" << file << "' and num is '"
                             << num << "'" << emulator::endl;
-          emulator::u64 n = std::strtoll(num.c_str(), NULL, 16);
+          emulator::u64 n = std::strtoll(num.c_str(), nullptr, 16);
           datae[file] = n;
           digits.clear();
           chars.clear();
           goto done;
         } else {
-          digits.push_back(c);
+          digits.push_back(static_cast<char>(c));
         }
       }
     } else {
-      chars.push_back(c);
+      chars.push_back(static_cast<char>(c));
     }
   done:;
   }

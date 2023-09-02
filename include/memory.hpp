@@ -15,6 +15,8 @@ namespace emulator {
 
 template <INTEGRAL WordSize, u64 ByteCount, INTEGRAL BusSize = WordSize>
 struct page {
+  u64 size = ByteCount;
+
   WordSize* bank;
   explicit page() { bank = new WordSize[ByteCount]; }
   ~page() { delete[] bank; }
@@ -50,6 +52,9 @@ struct page {
 template <INTEGRAL WordSize, u64 PageCount, u64 PageSize = 4096,
           INTEGRAL BusSize = WordSize>
 struct memory {
+  u64 pageCount = PageCount;
+  u64 pageSize = PageSize;
+
 #ifdef UNSAFE_READ
   mutable
 #endif
