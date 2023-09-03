@@ -165,7 +165,7 @@ struct cpu {
   // FP registers
   f64 fa, fb, fx;
 
-  // permentantly zero register good for TEST instructions
+  // permanently zero register good for TEST instructions
   u32 const z = 0;
 
   // special
@@ -267,8 +267,8 @@ struct cpu {
     }
   }
 
-  template <u64 N, typename Return = u32,
-            typename = typename std::enable_if<(sizeof(Return) * 8) >= N>::type>
+  template <u64 N, typename Return = u32>
+    requires((sizeof(Return) * 8) >= N)
   [[nodiscard]] Return
   literal_decode(u32 instruction) const noexcept {
     u64 mask = (N == (sizeof(u64) * 8)) ? ~0llu : (1llu << N) - 1llu;

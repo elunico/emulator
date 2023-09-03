@@ -5,17 +5,11 @@
 #include <type_traits>
 
 namespace emulator {
+
 template <typename T>
 struct ByteGettableSize {
   static const std::size_t size = sizeof(std::remove_reference_t<T>);
 };
-}  // namespace emulator
-
-#if __cplusplus >= 202002L
-
-#include <concepts>
-
-namespace emulator {
 
 template <int index, typename T>
 concept ByteShiftGetable =
@@ -27,21 +21,9 @@ concept ByteShiftGetable =
       requires(index < ByteGettableSize<T>::size);
     };
 
-}  // namespace emulator
-
-#define BYTE_OF_RETURN_TYPE requires ByteShiftGetable<index, T> constexpr auto
-
-#else
-
-#define BYTE_OF_RETURN_TYPE \
-  std::enable_if_t < index<ByteGettableSize<T>::size, T>
-
-#endif
-
-namespace emulator {
-
 template <int index, typename T>
-BYTE_OF_RETURN_TYPE
+  requires ByteShiftGetable<index, T>
+constexpr auto
 byte_of(T const& elt) {
   return (elt >> (static_cast<T>(index) * static_cast<T>(8))) &
          static_cast<T>(0xff);

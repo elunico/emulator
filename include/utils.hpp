@@ -45,12 +45,12 @@ struct memory_print_statement {
 };
 
 std::optional<memory_print_statement>
-parse_print_command(std::string line);
+parse_print_command(std::string const& line);
 
-enum class spaced { off, on };
+enum class spacing { off, on };
 
 void
-print_byte(std::ostream& os, emulator::byte b, spaced spaced_,
+print_byte(std::ostream& os, emulator::byte b, spacing spaced,
            byte_format format = byte_format::hex);
 
 #endif

@@ -17,7 +17,7 @@ static std::unordered_map<std::string, byte_format> format_map = {
      std::make_pair("bin", byte_format::bin)}};
 
 std::optional<memory_print_statement>
-parse_print_command(std::string s) {
+parse_print_command(std::string const& s) {
   memory_print_statement retval{};
 
   std::vector<std::string> tokens;
@@ -46,7 +46,7 @@ parse_print_command(std::string s) {
   try {
     retval.start = parse_int(tokens[num_index]);
     retval.end = parse_int(tokens[num_index + 1]);
-  } catch (std::invalid_argument e) {
+  } catch (std::invalid_argument& e) {
     return std::nullopt;
   }
 
@@ -54,7 +54,7 @@ parse_print_command(std::string s) {
 }
 
 void
-print_byte(std::ostream& os, emulator::byte b, spaced spaced_,
+print_byte(std::ostream& os, emulator::byte b, spacing spaced,
            byte_format format) {
   switch (format) {
     case byte_format::hex:
@@ -74,7 +74,7 @@ print_byte(std::ostream& os, emulator::byte b, spaced spaced_,
 
   os << std::uppercase << std::noshowbase << (b < 16 ? "0" : "")
      << static_cast<emulator::u32>(b);
-  if (spaced_ == spaced::on) {
+  if (spaced == spacing::on) {
     os << " ";
   }
 }
@@ -157,7 +157,7 @@ parse_program_spec(std::string const& config_name) {
     if (isspace(c))
       continue;
     else if (c == '#') {
-      while ((c = f.get()) != '\n' && !f.eof())
+      while ((f.get() != '\n') && !f.eof())
         ;
       f.unget();
     } else if (c == '=') {
@@ -169,7 +169,7 @@ parse_program_spec(std::string const& config_name) {
         if (c != '\n' && isspace(c))
           continue;
         else if (c == '#') {
-          while ((c = f.get()) != '\n' && !f.eof())
+          while ((f.get() != '\n') && !f.eof())
             ;
           f.unget();
         } else if (c == '\n') {

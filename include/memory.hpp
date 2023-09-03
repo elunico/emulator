@@ -13,7 +13,7 @@
 
 namespace emulator {
 
-template <INTEGRAL WordSize, u64 ByteCount, INTEGRAL BusSize = WordSize>
+template <std::integral WordSize, u64 ByteCount, std::integral BusSize = WordSize>
 struct page {
   u64 size = ByteCount;
 
@@ -49,8 +49,8 @@ struct page {
 #endif
 };
 
-template <INTEGRAL WordSize, u64 PageCount, u64 PageSize = 4096,
-          INTEGRAL BusSize = WordSize>
+template <std::integral WordSize, u64 PageCount, u64 PageSize = 4096,
+          std::integral BusSize = WordSize>
 struct memory {
   u64 pageCount = PageCount;
   u64 pageSize = PageSize;

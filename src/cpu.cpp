@@ -82,7 +82,7 @@ reswitch:
         break;
       } else {
         for (; p->start < p->end; p->start++) {
-          print_byte(std::cout, ram[p->start], spaced::on, p->format);
+          print_byte(std::cout, ram[p->start], spacing::on, p->format);
         }
         std::cout << std::endl;
       }
@@ -91,10 +91,10 @@ reswitch:
       cpu_time += tick().value_or(0);
       break;
     case 'c':
-      debugging = false;
-      break;
     case EOF:
       debugging = false;
+      break;
+    default:
       break;
   }
   prevline = line;
