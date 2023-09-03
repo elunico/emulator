@@ -8,7 +8,7 @@ namespace emulator {
 
 template <typename T>
 struct ByteGettableSize {
-  static const std::size_t size = sizeof(std::remove_reference_t<T>);
+  static constexpr std::size_t size = sizeof(std::remove_reference_t<T>);
 };
 
 template <int index, typename T>

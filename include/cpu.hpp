@@ -36,7 +36,7 @@ struct fetch_result {
   u8 opcode;
   u32 instruction;
 
-  fetch_result(u8 opcode, u32 instruction)
+  constexpr fetch_result(u8 opcode, u32 instruction)
       : opcode(opcode), instruction(instruction) {}
 };
 
