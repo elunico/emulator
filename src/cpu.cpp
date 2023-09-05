@@ -12,12 +12,13 @@
 namespace emulator {
 
 // public functions
-cpu::cpu() { reset(); }
+cpu::cpu() {
+  reset();
+}
 
 bool cpu::debugging = false;
 
-void
-cpu::reset() {
+void cpu::reset() {
   halted = false;
   pc = 0xF000;
   a = b = x = 0;
@@ -28,18 +29,15 @@ cpu::reset() {
   m_cycles = 0;
 }
 
-int
-cpu::cycles() const noexcept {
+int cpu::cycles() const noexcept {
   return m_cycles;
 }
 
-bool
-cpu::is_halted() const noexcept {
+bool cpu::is_halted() const noexcept {
   return halted;
 }
 
-void
-cpu::dump_registers(printer out) const {
+void cpu::dump_registers(printer out) const {
   out << std::hex << std::showbase;
   out << "====== Processor Registers ======\n";
   out << "| GP Registers\n";
@@ -58,8 +56,7 @@ cpu::dump_registers(printer out) const {
   out << std::dec;
 }
 
-void
-cpu::debug_tick(std::string& prevline, long long& cpu_time) {
+void cpu::debug_tick(std::string& prevline, long long& cpu_time) {
   std::cout << "Enter a command: (d)ump regs, (p)rint ram, (n)ext "
                "instruction, (c)ontinue"
             << std::endl;
@@ -100,8 +97,7 @@ reswitch:
   prevline = line;
 }
 
-void
-cpu::run() {
+void cpu::run() {
   long long cpu_time = 0;
   using us = std::chrono::microseconds;
   auto start = std::chrono::system_clock::now();
@@ -122,9 +118,9 @@ cpu::run() {
   metaout << "REAL: " << mseconds << " us. " << endl;
 }
 
-auto
-cpu::tick() -> std::optional<long long> {
-  if (halted) return std::nullopt;
+auto cpu::tick() -> std::optional<long long> {
+  if (halted)
+    return std::nullopt;
 
   using us = std::chrono::microseconds;
   auto start = std::chrono::system_clock::now();
@@ -144,18 +140,17 @@ cpu::tick() -> std::optional<long long> {
   return std::make_optional(mseconds);
 }
 
-void
-cpu::set_memory(byte const* bytes, u64 count, u64 addr_start) {
+void cpu::set_memory(byte const* bytes, u64 count, u64 addr_start) {
   ram.check_addr(addr_start + count);
-  for (int i = 0; i < count; i++) ram[addr_start + i] = bytes[i];
+  for (int i = 0; i < count; i++)
+    ram[addr_start + i] = bytes[i];
   emulator::metaout << "Loaded " << count << " bytes into memory at "
                     << addr_start << emulator::endl;
 }
 
 // private functions
 
-void
-cpu::zero_check() const noexcept {
+void cpu::zero_check() const noexcept {
   if (z != 0) {
     std::cerr << "!*!*!*!*!*!*! The zero register is " << z << " !*!*!*!*!*!*!"
               << std::endl;
@@ -166,38 +161,32 @@ cpu::zero_check() const noexcept {
   }
 }
 
-void
-cpu::ctrl_set(u32 bitmask) {
+void cpu::ctrl_set(u32 bitmask) {
   ctrl |= bitmask;
 }
 
-[[nodiscard]] u32
-cpu::ctrl_get(u32 bitmask) const {
+[[nodiscard]] u32 cpu::ctrl_get(u32 bitmask) const {
   return ctrl & bitmask;
 }
 
-void
-cpu::ctrl_clear(u32 setbits) {
+void cpu::ctrl_clear(u32 setbits) {
   ctrl &= ~(setbits);
 }
 
-void
-cpu::reg_store(u32 reg, u32 start_addr) {
+void cpu::reg_store(u32 reg, u32 start_addr) {
   ram[start_addr + 3] = byte_of<0>(reg);
   ram[start_addr + 2] = byte_of<1>(reg);
   ram[start_addr + 1] = byte_of<2>(reg);
   ram[start_addr + 0] = byte_of<3>(reg);
 }
 
-[[nodiscard]] u32
-cpu::fetch(u32 const& r) const {
+[[nodiscard]] u32 cpu::fetch(u32 const& r) const {
   u32 instr = (ram[r] << 24) | (ram[r + 1] << 16) | (ram[r + 2] << 8) |
               (ram[r + 3] << 0);
   return instr;
 }
 
-void
-cpu::set_needed_ctrl(u32* regptr) {
+void cpu::set_needed_ctrl(u32* regptr) {
   if (*regptr > 8388607u) {
     *regptr = -(16777216u - *regptr);
     ctrl_set(ctrl_bits::CTRL_NEG_BIT);
@@ -210,22 +199,19 @@ cpu::set_needed_ctrl(u32* regptr) {
   }
 }
 
-[[noreturn]] void
-cpu::invalid_registers() {
+[[noreturn]] void cpu::invalid_registers() {
   throw no_such_register(
       "The CPU attempted to execute a malformed instruction");
 };
 
-fetch_result
-cpu::get_next_instruction() {
+fetch_result cpu::get_next_instruction() {
   u32 instruction = fetch(pc);
   pc += 4;
   u8 opcode = byte_of<3>(instruction);
   return {opcode, instruction};
 }
 
-void
-cpu::execute_instruction(u8 opcode, u32 instruction) {
+void cpu::execute_instruction(u8 opcode, u32 instruction) {
   switch (opcode) {
     case opcodes::AND_R:
     case opcodes::OR_R:
@@ -538,8 +524,7 @@ cpu::execute_instruction(u8 opcode, u32 instruction) {
   }
 }
 
-void
-cpu::execute_extended_instruction(u8 opcode, u32 instruction) {
+void cpu::execute_extended_instruction(u8 opcode, u32 instruction) {
   metaout << "extended_tick" << endl;
   ctrl_clear(ctrl_bits::CTRL_EXT_FNC);
 

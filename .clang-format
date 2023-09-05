@@ -1,11 +1,12 @@
 ---
-BasedOnStyle: Google
-IndentWidth: 2
-DerivePointerAlignment: false
-PointerAlignment: Left
+# BasedOnStyle: Google
+BasedOnStyle: Chromium # !
+# IndentWidth: 2
+# DerivePointerAlignment: false
+# PointerAlignment: Left
 UseTab: Never
-AlwaysBreakAfterDefinitionReturnType: All
-AlwaysBreakAfterReturnType: All
+# AlwaysBreakAfterDefinitionReturnType: All
+# AlwaysBreakAfterReturnType: All
 # SpacesInParentheses: true
 # SpaceInEmptyBlock: true
 # SpaceInEmptyParentheses: true

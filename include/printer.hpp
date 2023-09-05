@@ -14,18 +14,16 @@ struct printer {
 };
 
 template <typename T>
-printer&
-operator<<(printer& printer, T val) {
-  if (printer.stream != nullptr) *printer.stream << val;
+printer& operator<<(printer& printer, T val) {
+  if (printer.stream != nullptr)
+    *printer.stream << val;
   return printer;
 }
 
 template <>
-printer&
-operator<<(printer& printer, struct printer& (*val)(struct printer&));
+printer& operator<<(printer& printer, struct printer& (*val)(struct printer&));
 
-printer&
-endl(printer& os);
+printer& endl(printer& os);
 
 extern printer metaout;
 extern printer cpuout;

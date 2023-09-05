@@ -13,43 +13,43 @@
 
 namespace emulator {
 
-template <std::integral WordSize, u64 ByteCount, std::integral BusSize = WordSize>
+template <std::integral WordSize,
+          u64 ByteCount,
+          std::integral BusSize = WordSize>
 struct page {
   u64 size = ByteCount;
 
   WordSize* bank;
   explicit page() { bank = new WordSize[ByteCount]; }
   ~page() { delete[] bank; }
-  [[maybe_unused]] void
-  initialize() {
-    for (int i = 0; i < ByteCount; i++) bank[i] = static_cast<WordSize>(0);
+  [[maybe_unused]] void initialize() {
+    for (int i = 0; i < ByteCount; i++)
+      bank[i] = static_cast<WordSize>(0);
   }
-  WordSize&
-  operator[](BusSize addr) {
+  WordSize& operator[](BusSize addr) {
     // *metaout << "Getting memory at " << addr << std::endl;
     check_addr(addr);
     return bank[addr];
   }
 
-  WordSize const&
-  at(BusSize addr) const {
+  WordSize const& at(BusSize addr) const {
     check_addr(addr);
     return bank[addr];
   }
 
 #ifdef NO_BOUNDS_CHECK_MEM
-  inline void
-  check_addr(BusSize addr) const noexcept {}
+  inline void check_addr(BusSize addr) const noexcept {}
 #else
-  void
-  check_addr(BusSize addr) const {
+  void check_addr(BusSize addr) const {
     if (addr >= ByteCount)
       throw std::out_of_range("Address of memory is out of range");
   }
 #endif
 };
 
-template <std::integral WordSize, u64 PageCount, u64 PageSize = 4096,
+template <std::integral WordSize,
+          u64 PageCount,
+          u64 PageSize = 4096,
           std::integral BusSize = WordSize>
 struct memory {
   u64 pageCount = PageCount;
@@ -61,8 +61,8 @@ struct memory {
       std::unordered_map<std::size_t, page<WordSize, PageSize, BusSize>>
           pages;
 
-  static auto
-  get_location(BusSize addr) -> std::pair<std::size_t, std::size_t> {
+  static auto get_location(BusSize addr)
+      -> std::pair<std::size_t, std::size_t> {
     if (PageSize == 0) {
       return std::make_pair(0, 0);
     }
@@ -71,8 +71,7 @@ struct memory {
     return std::make_pair(page, offset);
   }
 
-  WordSize&
-  operator[](BusSize addr) {
+  WordSize& operator[](BusSize addr) {
     // *metaout << "Getting memory at " << addr << std::endl;
     check_addr(addr);
     auto [page, offset] = get_location(addr);
@@ -81,11 +80,9 @@ struct memory {
   }
 
 #ifdef NO_BOUNDS_CHECK_MEM
-  inline void
-  check_addr(BusSize addr) const noexcept {}
+  inline void check_addr(BusSize addr) const noexcept {}
 #else
-  void
-  check_addr(BusSize addr) const {
+  void check_addr(BusSize addr) const {
     auto [p, o] = get_location(addr);
 
     if (p >= PageCount || o >= PageSize)
@@ -93,8 +90,7 @@ struct memory {
   }
 #endif
 
-  WordSize const&
-  operator[](BusSize addr) const {
+  WordSize const& operator[](BusSize addr) const {
     check_addr(addr);
     auto [page, offset] = get_location(addr);
 #ifdef UNSAFE_READ

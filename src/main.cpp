@@ -16,8 +16,7 @@
 #include "printer.hpp"
 #include "utils.hpp"
 
-int
-main(int argc, char const** argv) {
+int main(int argc, char const** argv) {
   if (argc < 2) {
     std::cerr << "Provide a program spec file to run" << std::endl;
     return 1;

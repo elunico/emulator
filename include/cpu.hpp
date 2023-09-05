@@ -23,8 +23,7 @@
 
 namespace emulator {
 
-constexpr u32
-get_jump_offset(u32 immediate) {
+constexpr u32 get_jump_offset(u32 immediate) {
   if (immediate & 0x800000) {
     return ((~0x800000) & immediate);
   } else {
@@ -121,39 +120,30 @@ struct cpu {
 
   cpu();
 
-  void
-  reset();
+  void reset();
 
-  int
-  cycles() const noexcept;
+  int cycles() const noexcept;
 
-  bool
-  is_halted() const noexcept;
+  bool is_halted() const noexcept;
 
-  void
-  dump_registers(printer out = metaout) const;
+  void dump_registers(printer out = metaout) const;
 
-  void
-  run();
+  void run();
 
-  auto
-  tick() -> std::optional<long long>;
+  auto tick() -> std::optional<long long>;
 
-  void
-  debug_tick(std::string&, long long&);
+  void debug_tick(std::string&, long long&);
 
-  void
-  set_memory(byte const* bytes, u64 count, u64 addr_start);
+  void set_memory(byte const* bytes, u64 count, u64 addr_start);
 
   template <typename InputIterator>
-  void
-  set_memory(InputIterator start, InputIterator end, u64 addr_start) {
-    for (; start < end; start++, addr_start++) ram[addr_start] = *start;
+  void set_memory(InputIterator start, InputIterator end, u64 addr_start) {
+    for (; start < end; start++, addr_start++)
+      ram[addr_start] = *start;
   }
 
  private:
-  [[noreturn]] static void
-  invalid_registers();
+  [[noreturn]] static void invalid_registers();
 
   bool halted = false;
 
@@ -183,39 +173,29 @@ struct cpu {
 
   int m_cycles = 0;
 
-  void
-  zero_check() const noexcept;
+  void zero_check() const noexcept;
 
-  void
-  ctrl_set(u32 bitmask);
+  void ctrl_set(u32 bitmask);
 
-  [[nodiscard]] u32
-  ctrl_get(u32 bitmask) const;
+  [[nodiscard]] u32 ctrl_get(u32 bitmask) const;
 
-  void
-  ctrl_clear(u32 setbits);
+  void ctrl_clear(u32 setbits);
 
-  void
-  reg_store(u32 reg, u32 start_addr);
+  void reg_store(u32 reg, u32 start_addr);
 
-  [[nodiscard]] u32
-  fetch(u32 const& r) const;
+  [[nodiscard]] u32 fetch(u32 const& r) const;
 
-  [[nodiscard]] fetch_result
-  get_next_instruction();
+  [[nodiscard]] fetch_result get_next_instruction();
 
-  void
-  set_needed_ctrl(u32* regptr);
+  void set_needed_ctrl(u32* regptr);
 
-  void
-  execute_instruction(u8 opcode, u32 instruction);
+  void execute_instruction(u8 opcode, u32 instruction);
 
-  void
-  execute_extended_instruction(u8 opcode, u32 instruction);
+  void execute_extended_instruction(u8 opcode, u32 instruction);
 
   template <typename RegType>
-  [[nodiscard]] std::tuple<RegType*, RegType*, RegType*>
-  register_decode_dss(u32 instruction) const {
+  [[nodiscard]] std::tuple<RegType*, RegType*, RegType*> register_decode_dss(
+      u32 instruction) const {
     u32 ssb = byte_of<0>(instruction);
     u32 srb = byte_of<1>(instruction);
     u32 sdb = byte_of<2>(instruction);
@@ -226,8 +206,8 @@ struct cpu {
   }
 
   template <typename RegType>
-  [[nodiscard]] std::pair<RegType*, RegType*>
-  register_decode_dsi(u32 instruction) const {
+  [[nodiscard]] std::pair<RegType*, RegType*> register_decode_dsi(
+      u32 instruction) const {
     u32 srb = byte_of<1>(instruction);
     u32 sdb = byte_of<2>(instruction);
 
@@ -237,8 +217,8 @@ struct cpu {
   }
 
   template <typename RegType>
-  [[nodiscard]] std::pair<RegType*, RegType*>
-  register_decode_both(u32 instruction) const {
+  [[nodiscard]] std::pair<RegType*, RegType*> register_decode_both(
+      u32 instruction) const {
     u32 reg1 = byte_of<0>(instruction);
     u32 reg2 = byte_of<1>(instruction);
     metaout << "reg1 " << reg1 << "reg2 " << reg2 << " and " << std::hex
@@ -249,28 +229,27 @@ struct cpu {
   }
 
   template <typename RegType>
-  [[nodiscard]] RegType*
-  register_decode_first(u32 instruction) const {
+  [[nodiscard]] RegType* register_decode_first(u32 instruction) const {
     u32 reg1 = byte_of<0>(instruction);
     return reg_get_by_index<RegType>(reg1);
   }
 
   template <typename RegType>
-  [[nodiscard]] RegType*
-  reg_get_by_index(u32 reg_index) const {
+  [[nodiscard]] RegType* reg_get_by_index(u32 reg_index) const {
     if constexpr (std::is_floating_point_v<RegType>) {
-      if (reg_index > fregs.size()) invalid_registers();
+      if (reg_index > fregs.size())
+        invalid_registers();
       return fregs[reg_index];
     } else {
-      if (reg_index > regs.size()) invalid_registers();
+      if (reg_index > regs.size())
+        invalid_registers();
       return regs[reg_index];
     }
   }
 
   template <u64 N, typename Return = u32>
     requires((sizeof(Return) * 8) >= N)
-  [[nodiscard]] Return
-  literal_decode(u32 instruction) const noexcept {
+  [[nodiscard]] Return literal_decode(u32 instruction) const noexcept {
     u64 mask = (N == (sizeof(u64) * 8)) ? ~0llu : (1llu << N) - 1llu;
     u64 temporary = (instruction & mask);
     Return value = *reinterpret_cast<Return*>(&temporary);

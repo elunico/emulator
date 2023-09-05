@@ -346,7 +346,8 @@ TEST_CASE("getting correct memory address", "[memory-offset-calculation]") {
   }
 
   SECTION("earlier") {
-    auto const& [page, offset] = emulator::memory<emulator::u32, 128, 512>::get_location(405);
+    auto const& [page, offset] =
+        emulator::memory<emulator::u32, 128, 512>::get_location(405);
 
     REQUIRE(page == 0);
     REQUIRE(offset == 405);
