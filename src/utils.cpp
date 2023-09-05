@@ -16,8 +16,8 @@ static std::unordered_map<std::string, byte_format> format_map = {
      std::make_pair("oct", byte_format::oct),
      std::make_pair("bin", byte_format::bin)}};
 
-std::optional<memory_print_statement> parse_print_command(
-    std::string const& s) {
+std::optional<memory_print_statement>
+parse_print_command(std::string const& s) {
   memory_print_statement retval{};
 
   std::vector<std::string> tokens;
@@ -53,10 +53,11 @@ std::optional<memory_print_statement> parse_print_command(
   return std::make_optional(retval);
 }
 
-void print_byte(std::ostream& os,
-                emulator::byte b,
-                spacing spaced,
-                byte_format format) {
+void
+print_byte(std::ostream& os,
+           emulator::byte b,
+           spacing spaced,
+           byte_format format) {
   switch (format) {
     case byte_format::hex:
       os << std::hex;
@@ -80,17 +81,8 @@ void print_byte(std::ostream& os,
   }
 }
 
-int parse_int(std::string const& s) {
-  int res;
-  if (s.starts_with("0x")) {
-    res = std::stoi(s.substr(2), nullptr, 16);
-  } else {
-    res = std::stoi(s);
-  }
-  return res;
-}
-
-void bytes_dump(emulator::byte* start, emulator::byte const* end) {
+void
+bytes_dump(emulator::byte* start, emulator::byte const* end) {
   for (; start < end; start++) {
     std::cout << std::hex << std::noshowbase << (*start < 16 ? "0" : "")
               << static_cast<emulator::u32>(*start);
@@ -98,7 +90,8 @@ void bytes_dump(emulator::byte* start, emulator::byte const* end) {
   std::cout << std::endl;
 }
 
-std::vector<emulator::byte> load_binary_file(std::string const& filename) {
+std::vector<emulator::byte>
+load_binary_file(std::string const& filename) {
   emulator::metaout << "Attempting to read " << filename << emulator::endl;
   std::ifstream f;
   f.open(filename, std::ios::binary);
@@ -115,7 +108,8 @@ std::vector<emulator::byte> load_binary_file(std::string const& filename) {
   return data;
 }
 
-bool skip_whitespace(std::ifstream& f) {
+bool
+skip_whitespace(std::ifstream& f) {
   while (!f.eof()) {
     int c = f.get();
     if (!std::isspace(c)) {
@@ -126,7 +120,8 @@ bool skip_whitespace(std::ifstream& f) {
   return false;
 }
 
-bool skip_comment(std::ifstream& f) {
+bool
+skip_comment(std::ifstream& f) {
   int c = f.get();
   if (c == '#') {
     // Ignore characters until the end of the line
@@ -140,8 +135,8 @@ bool skip_comment(std::ifstream& f) {
   return true;
 }
 
-std::map<std::string, emulator::u64> parse_program_spec(
-    std::string const& config_name) {
+std::map<std::string, emulator::u64>
+parse_program_spec(std::string const& config_name) {
   std::ifstream f;
   f.open(config_name);
 
@@ -194,7 +189,8 @@ std::map<std::string, emulator::u64> parse_program_spec(
   return datae;
 }
 
-void run_program_spec(std::string_view config_name, emulator::cpu& oncpu) {
+void
+run_program_spec(std::string_view config_name, emulator::cpu& oncpu) {
   auto datae = parse_program_spec(static_cast<std::string>(config_name));
 
   for (auto const& [file, addr] : datae) {
@@ -205,7 +201,8 @@ void run_program_spec(std::string_view config_name, emulator::cpu& oncpu) {
   return oncpu.run();
 }
 
-void run_program_file(std::string_view filename, emulator::cpu& oncpu) {
+void
+run_program_file(std::string_view filename, emulator::cpu& oncpu) {
   auto data = load_binary_file(static_cast<std::string>(filename));
 
   std::vector<emulator::byte> bootstrap = {{0xE1, 0x00, 0xC0, 0x04}};

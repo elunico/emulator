@@ -5,8 +5,8 @@ BasedOnStyle: Chromium # !
 # DerivePointerAlignment: false
 # PointerAlignment: Left
 UseTab: Never
-# AlwaysBreakAfterDefinitionReturnType: All
-# AlwaysBreakAfterReturnType: All
+AlwaysBreakAfterDefinitionReturnType: All
+AlwaysBreakAfterReturnType: All
 # SpacesInParentheses: true
 # SpaceInEmptyBlock: true
 # SpaceInEmptyParentheses: true

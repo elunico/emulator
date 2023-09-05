@@ -13,17 +13,19 @@ struct ByteGettableSize {
 };
 
 template <int index, typename T>
-concept ByteShiftGetable = requires(T t) {
-  { t >> t } noexcept -> std::same_as<std::decay_t<T>>;
-  { t& t } noexcept -> std::same_as<std::decay_t<T>>;
-  { t* t } noexcept -> std::same_as<std::decay_t<T>>;
-  requires(std::is_convertible_v<int, std::decay_t<T>>);
-  requires(index < ByteGettableSize<T>::size);
-};
+concept ByteShiftGetable =
+    requires(T t) {
+      { t >> t } noexcept -> std::same_as<std::decay_t<T>>;
+      { t& t } noexcept -> std::same_as<std::decay_t<T>>;
+      { t* t } noexcept -> std::same_as<std::decay_t<T>>;
+      requires(std::is_convertible_v<int, std::decay_t<T>>);
+      requires(index < ByteGettableSize<T>::size);
+    };
 
 template <int index, typename T>
   requires ByteShiftGetable<index, T>
-constexpr auto byte_of(T const& elt) {
+constexpr auto
+byte_of(T const& elt) {
   return (elt >> (static_cast<T>(index) * static_cast<T>(8))) &
          static_cast<T>(0xff);
 }

@@ -5,11 +5,11 @@ set(CMAKE_CXX_STANDARD 20)
 # set(CMAKE_CXX_FLAGS -DUNSAFE_READ)
 include_directories(include)
 
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -g")
+#set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -g")
 
-# set(CMAKE_BUILD_TYPE Release)
-# set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -O3")
+ set(CMAKE_BUILD_TYPE Release)
+ set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -O3")
 project(emulator)
 
 add_executable(emulate src/main.cpp src/printer.cpp src/utils.cpp src/cpu.cpp src/cpu_breaker.cpp)
